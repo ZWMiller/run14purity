@@ -25,7 +25,7 @@ void offline(const char* FileName="test")
 
   // Open ROOT File
   char name[1000];
-  sprintf(name,"/Users/zach/Research/rootFiles/run14NPEpurity/outputs/%s.root",FileName);
+  sprintf(name,"/Users/zach/Research/rootFiles/run14NPEpurity/%s.root",FileName);
   TFile *f = new TFile(name,"READ");
   if (f->IsOpen()==kFALSE)
   { std::cout << "!!! File Not Found !!!" << std::endl;
@@ -35,7 +35,7 @@ void offline(const char* FileName="test")
   char fname[100];
   TFile* file;
   if(makeROOT){
-    sprintf(fname,"/Users/zach/Research/rootFiles/run14NPEpurity/outputs/%s_processed.root",FileName);
+    sprintf(fname,"/Users/zach/Research/rootFiles/run14NPEpurity/%s_processed.root",FileName);
     file = new TFile(fname,"RECREATE");
     if (file->IsOpen()==kFALSE)
     {
@@ -87,6 +87,14 @@ void offline(const char* FileName="test")
   TH1D* projnSigmaP[numPtBins];
   TH1D* projnSigmaE[numPtBins];
   TH1D* projinvBeta[numPtBins];
+  TF1 *fitPi[numPtBins];
+  TF1 *fitKP[numPtBins];
+  TF1 *fitE[numPtBins];
+  TF1 *fitCom[numPtBins];
+  TF1 *fitPiD[numPtBins];
+  TF1 *fitKPD[numPtBins];
+  TF1 *fitED[numPtBins];
+  TF1 *fitComD[numPtBins];
 
   for(Int_t ptbin=0; ptbin<numPtBins; ptbin++)
   {
@@ -101,12 +109,13 @@ void offline(const char* FileName="test")
   for(Int_t ptbin = 0; ptbin < numPtBins; ptbin++){
 
     // Init necessary plotting tools
-    lbl[ptbin] = new TPaveText(.61,.75,.81,.83,Form("NB NDC%i",ptbin));
+    lbl[ptbin] = new TPaveText(.65,.37,.81,.44,Form("NB NDC%i",ptbin));
     sprintf(textLabel,"%.1f < P_{T,e} < %.1f",lowpt[ptbin],highpt[ptbin]);
     lbl[ptbin]->AddText(textLabel);
     lbl[ptbin]->SetFillColor(kWhite);
 
     nSigPi->cd(ptbin+1);
+    gPad->SetLogy();
     projnSigmaPi[ptbin]->SetMarkerColor(kBlack);
     projnSigmaPi[ptbin]->SetMarkerStyle(20);
     projnSigmaPi[ptbin]->SetMarkerSize(0.5);
@@ -117,6 +126,7 @@ void offline(const char* FileName="test")
     lbl[ptbin]->Draw("same");
 
     nSigK->cd(ptbin+1);
+    gPad->SetLogy();
     projnSigmaK[ptbin]->SetMarkerColor(kBlack);
     projnSigmaK[ptbin]->SetMarkerStyle(20);
     projnSigmaK[ptbin]->SetMarkerSize(0.5);
@@ -127,6 +137,7 @@ void offline(const char* FileName="test")
     lbl[ptbin]->Draw("same");
 
     nSigP->cd(ptbin+1);
+    gPad->SetLogy();
     projnSigmaP[ptbin]->SetMarkerColor(kBlack);
     projnSigmaP[ptbin]->SetMarkerStyle(20);
     projnSigmaP[ptbin]->SetMarkerSize(0.5);
@@ -137,6 +148,7 @@ void offline(const char* FileName="test")
     lbl[ptbin]->Draw("same");
 
     nSigE->cd(ptbin+1);
+    gPad->SetLogy();
     projnSigmaE[ptbin]->SetMarkerColor(kBlack);
     projnSigmaE[ptbin]->SetMarkerStyle(20);
     projnSigmaE[ptbin]->SetLineColor(kBlack);
@@ -145,8 +157,77 @@ void offline(const char* FileName="test")
     projnSigmaE[ptbin]->SetTitle("");
     projnSigmaE[ptbin]->Draw();
     lbl[ptbin]->Draw("same");
-  
+
+    // Do fits on nSig E
+    gStyle->SetOptFit(1111);
+    Double_t par[9];
+    Double_t parS[3];
+    fitKP[ptbin] = new TF1(Form("fitKP_%i",ptbin),"gaus",-10,-5);
+    fitPi[ptbin] = new TF1(Form("fitPi_%i",ptbin),"gaus",-5,-2);
+    fitE[ptbin]  = new TF1(Form("fitE_%i",ptbin),"gaus",-2,4);
+    fitCom[ptbin]= new TF1(Form("fitCom_%i",ptbin),"gaus(0)+gaus(3)+gaus(6)",-10,4);
+    fitCom[ptbin]->SetParName(0,"#pi C");
+    fitCom[ptbin]->SetParName(1,"#pi #mu");
+    fitCom[ptbin]->SetParName(2,"#pi #sigma");
+    fitCom[ptbin]->SetParName(3,"Kp C");
+    fitCom[ptbin]->SetParName(4,"Kp #mu");
+    fitCom[ptbin]->SetParName(5,"Kp #sigma");
+    fitCom[ptbin]->SetParName(6,"e C");
+    fitCom[ptbin]->SetParName(7,"e #mu");
+    fitCom[ptbin]->SetParName(8,"e #sigma");
+    fitPi[ptbin]->SetLineColor(kRed);
+    fitKP[ptbin]->SetLineColor(kCyan);
+    fitE[ptbin]->SetLineColor(kBlue);
+    fitCom[ptbin]->SetLineColor(kBlack);
+    fitPi[ptbin]->SetLineWidth(1);
+    fitKP[ptbin]->SetLineWidth(1);
+    fitE[ptbin]->SetLineWidth(1);
+    fitCom[ptbin]->SetLineWidth(1);
+    projnSigmaE[ptbin]->Fit(fitPi[ptbin],"R");
+    projnSigmaE[ptbin]->Fit(fitKP[ptbin],"R");
+    projnSigmaE[ptbin]->Fit(fitE[ptbin],"R");
+    fitPi[ptbin]->GetParameters(&par[0]);
+    fitKP[ptbin]->GetParameters(&par[3]);
+    fitE[ptbin]->GetParameters(&par[6]);
+    fitCom[ptbin]->SetParameters(par);
+    projnSigmaE[ptbin]->Fit(fitCom[ptbin],"R");
+    projnSigmaE[ptbin]->UseCurrentStyle();
+
+    // make versions to draw fits in full
+    fitPiD[ptbin] = new TF1(Form("drawPi_%i",ptbin),"gaus",-10,10);
+    fitKPD[ptbin] = new TF1(Form("drawKP_%i",ptbin),"gaus",-10,10);
+    fitED[ptbin] = new TF1(Form("drawE_%i",ptbin),"gaus",-10,10);
+    fitPi[ptbin]->GetParameters(&parS[0]);
+    fitPiD[ptbin]->SetParameters(parS);
+    fitKP[ptbin]->GetParameters(&parS[0]);
+    fitKPD[ptbin]->SetParameters(parS);
+    fitE[ptbin]->GetParameters(&parS[0]);
+    fitED[ptbin]->SetParameters(parS);
+    fitPiD[ptbin]->SetLineStyle(2);
+    fitPiD[ptbin]->SetLineWidth(1);
+    fitPiD[ptbin]->SetLineColor(kRed);
+    fitKPD[ptbin]->SetLineStyle(2);
+    fitKPD[ptbin]->SetLineWidth(1);
+    fitKPD[ptbin]->SetLineColor(kCyan);
+    fitED[ptbin]->SetLineStyle(2);
+    fitED[ptbin]->SetLineWidth(1);
+    fitED[ptbin]->SetLineColor(kBlue);
+    fitPiD[ptbin]->Draw("same");
+    fitKPD[ptbin]->Draw("same");
+    fitED[ptbin]->Draw("same");
+
+    // Make Stats box legible
+    TPaveStats *s = (TPaveStats*) gPad->GetPrimitive("stats");
+    s->SetX1NDC(0.65);
+    s->SetX2NDC(0.95);
+    s->SetY1NDC(0.45);
+    s->SetY2NDC(0.95);
+    nSigE->Modified();
+    nSigE->Update();
+
+
     invBeta->cd(ptbin+1);
+    gPad->SetLogy();
     projinvBeta[ptbin]->SetMarkerColor(kBlack);
     projinvBeta[ptbin]->SetMarkerStyle(20);
     projinvBeta[ptbin]->SetLineColor(kBlack);
@@ -191,17 +272,15 @@ void offline(const char* FileName="test")
     tl.SetTextColor(kBlack);
     tl.SetTextSize(0.03);
     tl.DrawLatex(0.1, 0.14, titlename);
-    sprintf(tlName,"-1.5 < n #sigma E < 3; n #sigma P < #left|20#right|; ");
-    tl.DrawLatex(0.1, 0.8,tlName);
-    sprintf(tlName,"n #sigma K < #left|20#right|; n #sigma Pi < #left|20#right|;");
+    sprintf(tlName,"eID:                      0.3 < p/E < 1.5; p    _{T} > 1.5 GeV/c; DCA < 1.5 cm");
     tl.DrawLatex(0.1, 0.75,tlName);
-    sprintf(tlName,"");
+    sprintf(tlName,"Track Quality:    nHitsFit > 20; nHits     #frac{dE}{dx}  > 15;");
     tl.DrawLatex(0.1, 0.7,tlName);
-    sprintf(tlName,"");
-    tl.DrawLatex(0.1, 0.6,tlName);
-    sprintf(tlName,"Event:  #left|V_{z}#right| < 100 cm;");
-    tl.DrawLatex(0.1, 0.5,tlName);
-    sprintf(tlName,"Triggers:  HT");
+    sprintf(tlName,"                            nHitFit/Max > 0.52;    #left|#eta#right| < 0.7;");
+    tl.DrawLatex(0.1, 0.65,tlName);
+    sprintf(tlName,"Event:            #left|V_{z}#right| < 6 cm; #left|#DeltaV_{z}#right| < 4 cm");
+    tl.DrawLatex(0.1, 0.45,tlName);
+    sprintf(tlName,"Triggers:            MB");
     tl.DrawLatex(0.1, 0.4,tlName);
 
 
