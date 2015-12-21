@@ -163,9 +163,9 @@ void offline(const char* FileName="test")
     Double_t par[9];
     Double_t parS[3];
     fitKP[ptbin] = new TF1(Form("fitKP_%i",ptbin),"gaus",-10,-5);
-    fitPi[ptbin] = new TF1(Form("fitPi_%i",ptbin),"gaus",-5,-2);
-    fitE[ptbin]  = new TF1(Form("fitE_%i",ptbin),"gaus",-2,4);
-    fitCom[ptbin]= new TF1(Form("fitCom_%i",ptbin),"gaus(0)+gaus(3)+gaus(6)",-10,4);
+    fitPi[ptbin] = new TF1(Form("fitPi_%i",ptbin),"gaus",-5,-1);
+    fitE[ptbin]  = new TF1(Form("fitE_%i",ptbin),"gaus",-1,4);
+    fitCom[ptbin]= new TF1(Form("fitCom_%i",ptbin),"gaus(0)+gaus(3)+gaus(6)",-10,10);
     fitCom[ptbin]->SetParName(0,"#pi C");
     fitCom[ptbin]->SetParName(1,"#pi #mu");
     fitCom[ptbin]->SetParName(2,"#pi #sigma");
@@ -278,6 +278,9 @@ void offline(const char* FileName="test")
     tl.DrawLatex(0.1, 0.7,tlName);
     sprintf(tlName,"                            nHitFit/Max > 0.52;    #left|#eta#right| < 0.7;");
     tl.DrawLatex(0.1, 0.65,tlName);
+     sprintf(tlName,"                            isHFTTrack();");
+    tl.DrawLatex(0.1, 0.6,tlName);
+
     sprintf(tlName,"Event:            #left|V_{z}#right| < 6 cm; #left|#DeltaV_{z}#right| < 4 cm");
     tl.DrawLatex(0.1, 0.45,tlName);
     sprintf(tlName,"Triggers:            MB");
