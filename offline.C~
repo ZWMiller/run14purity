@@ -13,6 +13,7 @@ Bool_t checkMakeRoot();
 Bool_t makePDF,makeROOT;
 Bool_t DEBUG = kFALSE;
 int isLogY = 1;
+Bool_t drawAll = kFALSE;
 
 void offline(const char* FileName="test", Int_t trig=4) //0=MB,1=HT1,2=HT2,3=HT3,4=ALL
 {
@@ -44,15 +45,15 @@ void makeHist(const char* FileName="test", Int_t trig=4)
   gErrorIgnoreLevel = kError; // Set Verbosity Level (kPrint shows all)
 
 
-   char FileLabel[100];
-    if(trig == 0)
-        sprintf(FileLabel, "MB");
-    if(trig == 1)
-        sprintf(FileLabel, "BHT1");
-    if(trig == 2)
-        sprintf(FileLabel, "BHT2");
-    if(trig == 3)
-        sprintf(FileLabel, "BHT3");
+  char FileLabel[100];
+  if(trig == 0)
+    sprintf(FileLabel, "MB");
+  if(trig == 1)
+    sprintf(FileLabel, "BHT1");
+  if(trig == 2)
+    sprintf(FileLabel, "BHT2");
+  if(trig == 3)
+    sprintf(FileLabel, "BHT3");
 
   Int_t number;
   // Open ROOT File
@@ -82,6 +83,7 @@ void makeHist(const char* FileName="test", Int_t trig=4)
   }
 
   const Int_t numPtBins = anaConst::nPtBins;
+  const Int_t numCanvas = numPtBins/9 + 1;
   Float_t lowpt[numPtBins],highpt[numPtBins];
   for(Int_t c=0; c< numPtBins; c++){
     lowpt[c] = anaConst::lpt[c];
@@ -99,20 +101,36 @@ void makeHist(const char* FileName="test", Int_t trig=4)
 
   // Make Canvas
 
-  TCanvas* nSigPi  = new TCanvas("nSigPi","nSigma Pion Projections",50,50,1050,1050);
-  TCanvas* nSigK   = new TCanvas("nSigP","nSigma Kaon Projections",50,50,1050,1050);
-  TCanvas* nSigP   = new TCanvas("nSigK","nSigma Proton Projections",50,50,1050,1050);
-  TCanvas* nSigE   = new TCanvas("nSigE","nSigma Electron Projections",50,50,1050,1050);
-  TCanvas* nSigEK  = new TCanvas("nSigEK","nSigma Electron K enh Projections",50,50,1050,1050);
-  TCanvas* nSigEP  = new TCanvas("nSigEP","nSigma Electron p enh Projections",50,50,1050,1050);
-  TCanvas* nSigEPi = new TCanvas("nSigEPi","nSigma Electron pi enh Projections",50,50,1050,1050);
-  TCanvas* invBeta = new TCanvas("invBeta","Beta^(-1) Projections",50,50,1050,1050);
+  TCanvas* nSigPi[numCanvas]; 
+  TCanvas* nSigK [numCanvas]; 
+  TCanvas* nSigP[numCanvas]; 
+  TCanvas* nSigE[numCanvas]; 
+  TCanvas* nSigEK[numCanvas];
+  TCanvas* nSigEP[numCanvas];
+  TCanvas* nSigEPi[numCanvas];
+  TCanvas* invBeta[numCanvas];
   TCanvas* purC = new TCanvas("purC","Electron Purity",50,50,1050,1050);
-  nSigPi  -> Divide(3,3);
-  nSigK   -> Divide(3,3);
-  nSigP   -> Divide(3,3);
-  nSigE   -> Divide(3,3);
-  invBeta -> Divide(3,3);
+  for(Int_t q = 0; q < numCanvas; q++)
+  {
+    nSigPi[q] = new TCanvas(Form("nSigPi_%i",q),"nSigma Pion Projections",50,50,1050,1050);
+    nSigK[q] = new TCanvas(Form("nSigP_%i",q),"nSigma Kaon Projections",50,50,1050,1050);
+    nSigP[q] = new TCanvas(Form("nSigK_%i",q),"nSigma Proton Projections",50,50,1050,1050);
+
+    nSigE[q] = new TCanvas(Form("nSigE_%i",q),"nSigma Electron Projections",50,50,1050,1050);
+    nSigEK[q] = new TCanvas(Form("nSigEK_%i",q),"nSigma Electron K enh Projections",50,50,1050,1050);
+    nSigEP[q] = new TCanvas(Form("nSigEP_%i",q),"nSigma Electron p enh Projections",50,50,1050,1050);
+    nSigEPi[q] = new TCanvas(Form("nSigEPi_%i",q),"nSigma Electron pi enh Projections",50,50,1050,1050);
+    invBeta[q] = new TCanvas(Form("invBeta_%i",q),"Beta^(-1) Projections",50,50,1050,1050);
+
+    nSigE[q]   -> Divide(3,3);
+    nSigP[q]  -> Divide(3,3);
+    nSigK[q]   -> Divide(3,3);
+    nSigP[q]   -> Divide(3,3);
+    invBeta[q] -> Divide(3,3);
+    nSigEK[q]   -> Divide(3,3);
+    nSigEP[q]   -> Divide(3,3);
+    nSigEPi[q]   -> Divide(3,3);
+  }
 
   // Make Projections (first get 2d/3d hists, then project)
 
@@ -173,40 +191,46 @@ void makeHist(const char* FileName="test", Int_t trig=4)
     lbl[ptbin]->AddText(textLabel);
     lbl[ptbin]->SetFillColor(kWhite);
 
-    nSigPi->cd(ptbin+1);
-    gPad->SetLogy(isLogY);
-    projnSigmaPi[ptbin]->SetMarkerColor(kBlack);
-    projnSigmaPi[ptbin]->SetMarkerStyle(20);
-    projnSigmaPi[ptbin]->SetMarkerSize(0.5);
-    projnSigmaPi[ptbin]->SetLineColor(kBlack);
-    projnSigmaPi[ptbin]->GetXaxis()->SetRangeUser(-10.,10.);
-    projnSigmaPi[ptbin]->SetTitle("");
-    projnSigmaPi[ptbin]->Draw();
-    lbl[ptbin]->Draw("same");
+    int activeCanvas = (int)ptbin/9;
+    int activeBin = ptbin - activeCanvas*9;
+    cout << ptbin << ": " << activeCanvas << " " << activeBin << endl;
 
-    nSigK->cd(ptbin+1);
-    gPad->SetLogy(isLogY);
-    projnSigmaK[ptbin]->SetMarkerColor(kBlack);
-    projnSigmaK[ptbin]->SetMarkerStyle(20);
-    projnSigmaK[ptbin]->SetMarkerSize(0.5);
-    projnSigmaK[ptbin]->SetLineColor(kBlack);
-    projnSigmaK[ptbin]->GetXaxis()->SetRangeUser(-10.,10.);
-    projnSigmaK[ptbin]->SetTitle("");
-    projnSigmaK[ptbin]->Draw();
-    lbl[ptbin]->Draw("same");
+    if(drawAll){
+      nSigPi[activeCanvas]->cd(activeBin+1);
+      gPad->SetLogy(isLogY);
+      projnSigmaPi[ptbin]->SetMarkerColor(kBlack);
+      projnSigmaPi[ptbin]->SetMarkerStyle(20);
+      projnSigmaPi[ptbin]->SetMarkerSize(0.5);
+      projnSigmaPi[ptbin]->SetLineColor(kBlack);
+      projnSigmaPi[ptbin]->GetXaxis()->SetRangeUser(-10.,10.);
+      projnSigmaPi[ptbin]->SetTitle("");
+      projnSigmaPi[ptbin]->Draw();
+      lbl[ptbin]->Draw("same");
 
-    nSigP->cd(ptbin+1);
-    gPad->SetLogy(isLogY);
-    projnSigmaP[ptbin]->SetMarkerColor(kBlack);
-    projnSigmaP[ptbin]->SetMarkerStyle(20);
-    projnSigmaP[ptbin]->SetMarkerSize(0.5);
-    projnSigmaP[ptbin]->SetLineColor(kBlack);
-    projnSigmaP[ptbin]->GetXaxis()->SetRangeUser(-10.,10.);
-    projnSigmaP[ptbin]->SetTitle("");
-    projnSigmaP[ptbin]->Draw();
-    lbl[ptbin]->Draw("same");
+      nSigK[activeCanvas]->cd(activeBin+1);
+      gPad->SetLogy(isLogY);
+      projnSigmaK[ptbin]->SetMarkerColor(kBlack);
+      projnSigmaK[ptbin]->SetMarkerStyle(20);
+      projnSigmaK[ptbin]->SetMarkerSize(0.5);
+      projnSigmaK[ptbin]->SetLineColor(kBlack);
+      projnSigmaK[ptbin]->GetXaxis()->SetRangeUser(-10.,10.);
+      projnSigmaK[ptbin]->SetTitle("");
+      projnSigmaK[ptbin]->Draw();
+      lbl[ptbin]->Draw("same");
 
-    nSigE->cd(ptbin+1);
+      nSigP[activeCanvas]->cd(activeBin+1);
+      gPad->SetLogy(isLogY);
+      projnSigmaP[ptbin]->SetMarkerColor(kBlack);
+      projnSigmaP[ptbin]->SetMarkerStyle(20);
+      projnSigmaP[ptbin]->SetMarkerSize(0.5);
+      projnSigmaP[ptbin]->SetLineColor(kBlack);
+      projnSigmaP[ptbin]->GetXaxis()->SetRangeUser(-10.,10.);
+      projnSigmaP[ptbin]->SetTitle("");
+      projnSigmaP[ptbin]->Draw();
+      lbl[ptbin]->Draw("same");
+    }
+
+    nSigE[activeCanvas]->cd(activeBin+1);
     gPad->SetLogy(isLogY);
     projnSigmaE[ptbin]->SetMarkerColor(kBlack);
     projnSigmaE[ptbin]->SetMarkerStyle(20);
@@ -217,41 +241,43 @@ void makeHist(const char* FileName="test", Int_t trig=4)
     projnSigmaE[ptbin]->Draw();
     lbl[ptbin]->Draw("same");
 
-    nSigEK->cd(ptbin+1);
-    gPad->SetLogy(isLogY);
-    projnSigmaEK[ptbin]->SetMarkerColor(kBlack);
-    projnSigmaEK[ptbin]->SetMarkerStyle(20);
-    projnSigmaEK[ptbin]->SetLineColor(kBlack);
-    projnSigmaEK[ptbin]->SetMarkerSize(0.5);
-    projnSigmaEK[ptbin]->GetXaxis()->SetRangeUser(-10.,10.);
-    projnSigmaEK[ptbin]->SetTitle("");
-    projnSigmaEK[ptbin]->Draw();
-    lbl[ptbin]->Draw("same");
+    if(drawAll){
+      nSigEK[activeCanvas]->cd(activeBin+1);
+      gPad->SetLogy(isLogY);
+      projnSigmaEK[ptbin]->SetMarkerColor(kBlack);
+      projnSigmaEK[ptbin]->SetMarkerStyle(20);
+      projnSigmaEK[ptbin]->SetLineColor(kBlack);
+      projnSigmaEK[ptbin]->SetMarkerSize(0.5);
+      projnSigmaEK[ptbin]->GetXaxis()->SetRangeUser(-10.,10.);
+      projnSigmaEK[ptbin]->SetTitle("");
+      projnSigmaEK[ptbin]->Draw();
+      lbl[ptbin]->Draw("same");
 
-    nSigEP->cd(ptbin+1);
-    gPad->SetLogy(isLogY);
-    projnSigmaEP[ptbin]->SetMarkerColor(kBlack);
-    projnSigmaEP[ptbin]->SetMarkerStyle(20);
-    projnSigmaEP[ptbin]->SetLineColor(kBlack);
-    projnSigmaEP[ptbin]->SetMarkerSize(0.5);
-    projnSigmaEP[ptbin]->GetXaxis()->SetRangeUser(-10.,10.);
-    projnSigmaEP[ptbin]->SetTitle("");
-    projnSigmaEP[ptbin]->Draw();
-    lbl[ptbin]->Draw("same");
+      nSigEP[activeCanvas]->cd(activeBin+1);
+      gPad->SetLogy(isLogY);
+      projnSigmaEP[ptbin]->SetMarkerColor(kBlack);
+      projnSigmaEP[ptbin]->SetMarkerStyle(20);
+      projnSigmaEP[ptbin]->SetLineColor(kBlack);
+      projnSigmaEP[ptbin]->SetMarkerSize(0.5);
+      projnSigmaEP[ptbin]->GetXaxis()->SetRangeUser(-10.,10.);
+      projnSigmaEP[ptbin]->SetTitle("");
+      projnSigmaEP[ptbin]->Draw();
+      lbl[ptbin]->Draw("same");
 
-    nSigEPi->cd(ptbin+1);
-    gPad->SetLogy(isLogY);
-    projnSigmaEPi[ptbin]->SetMarkerColor(kBlack);
-    projnSigmaEPi[ptbin]->SetMarkerStyle(20);
-    projnSigmaEPi[ptbin]->SetLineColor(kBlack);
-    projnSigmaEPi[ptbin]->SetMarkerSize(0.5);
-    projnSigmaEPi[ptbin]->GetXaxis()->SetRangeUser(-10.,10.);
-    projnSigmaEPi[ptbin]->SetTitle("");
-    projnSigmaEPi[ptbin]->Draw();
-    lbl[ptbin]->Draw("same");
+      nSigEPi[activeCanvas]->cd(activeBin+1);
+      gPad->SetLogy(isLogY);
+      projnSigmaEPi[ptbin]->SetMarkerColor(kBlack);
+      projnSigmaEPi[ptbin]->SetMarkerStyle(20);
+      projnSigmaEPi[ptbin]->SetLineColor(kBlack);
+      projnSigmaEPi[ptbin]->SetMarkerSize(0.5);
+      projnSigmaEPi[ptbin]->GetXaxis()->SetRangeUser(-10.,10.);
+      projnSigmaEPi[ptbin]->SetTitle("");
+      projnSigmaEPi[ptbin]->Draw();
+      lbl[ptbin]->Draw("same");
+    }
 
     // Do fits on nSig E
-    nSigE->cd(ptbin+1);
+    nSigE[activeCanvas]->cd(activeBin+1);
     gStyle->SetOptFit(1111);
     Double_t par[12];
     Double_t parS[3];
@@ -259,7 +285,7 @@ void makeHist(const char* FileName="test", Int_t trig=4)
     kpLow = -10.; kpHigh =-6.; 
     piLow = -5. ; piHigh = -2.;
     eLow = -1.  ; eHigh = 3.;
-    mpiLow = 3.5; mpiHigh = 5.5;
+    mpiLow = 3.; mpiHigh = 6;
     fitKP[ptbin] = new TF1(Form("fitKP_%i",ptbin),"gaus",kpLow,kpHigh);
     fitPi[ptbin] = new TF1(Form("fitPi_%i",ptbin),"gaus",piLow,piHigh);
     fitE[ptbin]  = new TF1(Form("fitE_%i",ptbin),"gaus",eLow,eHigh);
@@ -307,6 +333,9 @@ void makeHist(const char* FileName="test", Int_t trig=4)
     projnSigmaE[ptbin]->Fit(fitCom[ptbin],"R");
     projnSigmaE[ptbin]->UseCurrentStyle();
     fitCom[ptbin]->GetParameters(&par[0]);
+    float chi2 = fitCom[ptbin]->GetChisquare();
+    int ndf = fitCom[ptbin]->GetNDF();
+    float chiNDF = chi2/(float)ndf;
 
     if(DEBUG) cout << "finish fit" << endl;
 
@@ -337,7 +366,7 @@ void makeHist(const char* FileName="test", Int_t trig=4)
     fitPiD[ptbin]->SetLineColor(kRed);
     fitmPiD[ptbin]->SetLineStyle(2);
     fitmPiD[ptbin]->SetLineWidth(1);
-    fitmPiD[ptbin]->SetLineColor(kBlack);
+    fitmPiD[ptbin]->SetLineColor(kGreen+3);
     fitKPD[ptbin]->SetLineStyle(2);
     fitKPD[ptbin]->SetLineWidth(1);
     fitKPD[ptbin]->SetLineColor(kCyan);
@@ -355,7 +384,6 @@ void makeHist(const char* FileName="test", Int_t trig=4)
     eInte[ptbin] = fitED[ptbin]->Integral(-1,3);
     piInte[ptbin] = fitPiD[ptbin]->Integral(-1,3);
     mpiInte[ptbin] = fitmPiD[ptbin]->Integral(-1,3);
-    cout << "mPi Inte: " << mpiInte[ptbin] << endl;
     kpInte[ptbin] = fitKPD[ptbin]->Integral(-1,3);
     sum[ptbin] = eInte[ptbin]+piInte[ptbin]+mpiInte[ptbin]+kpInte[ptbin];
     purity[ptbin] = eInte[ptbin]/sum[ptbin];
@@ -363,19 +391,23 @@ void makeHist(const char* FileName="test", Int_t trig=4)
     dx[ptbin] = (highpt[ptbin]-lowpt[ptbin])/2.;
     dy[ptbin] = 1/eInte[ptbin]*purity[ptbin];
 
+    // Force removal of higher chi2/ndf as a test. DON'T KEEP
+    if(chiNDF >= 1.0)
+      purity[ptbin] = 0;
 
     // Make Stats box legible
-    /*nSigE->cd(ptbin+1);
+    nSigE[activeCanvas]->cd(activeBin+1);
     TPaveStats *s = (TPaveStats*) gPad->GetPrimitive("stats");
     s->SetX1NDC(0.65);
     s->SetX2NDC(0.95);
     s->SetY1NDC(0.45);
     s->SetY2NDC(0.95);
-    nSigE->Modified();
-    nSigE->Update();
-    if(DEBUG) cout << "Stats Modified" << endl;*/
+    nSigE[activeCanvas]->Modified();
 
-    invBeta->cd(ptbin+1);
+    nSigE[activeCanvas]->Update();
+    if(DEBUG) cout << "Stats Modified" << endl;
+
+    invBeta[activeCanvas]->cd(activeBin+1);
     gPad->SetLogy(isLogY);
     projinvBeta[ptbin]->SetMarkerColor(kBlack);
     projinvBeta[ptbin]->SetMarkerStyle(20);
@@ -386,7 +418,7 @@ void makeHist(const char* FileName="test", Int_t trig=4)
     lbl[ptbin]->Draw("same");
 
   }
- 
+
   // make graphs that need all pt bins
   TGraphErrors* purGr = new TGraphErrors(numPtBins,pT,purity,dx,dy);
   purC->cd();
@@ -451,30 +483,39 @@ void makeHist(const char* FileName="test", Int_t trig=4)
 
     // Place canvases in order
     TCanvas* temp = new TCanvas();
-   
+
     sprintf(name, "%s_%s.pdf[", FileName,FileLabel);
     temp->Print(name);
     sprintf(name, "%s_%s.pdf", FileName,FileLabel);
     temp = fp; // print front page
     temp->Print(name);
-    temp = nSigE; // print data canvases
-    temp->Print(name);
+    for(int q=0; q<numCanvas; q++)
+    {
+      temp = nSigE[q]; // print data canvases
+      temp->Print(name);
+    }
     temp = purC;
     temp->Print(name);
-    temp = nSigPi;
-    temp->Print(name);
-    temp = nSigK;
-    temp->Print(name);
-    temp = nSigP;
-    temp->Print(name);
-    temp = nSigEK;
-    temp->Print(name);
-    temp = nSigEP;
-    temp->Print(name);
-    temp = nSigEPi;
-    temp->Print(name);
-    temp = invBeta;
-    temp->Print(name);
+
+    if(drawAll){
+      for(int q=0; q<numCanvas; q++)
+      {
+        temp = nSigPi[q];
+        temp->Print(name);
+        temp = nSigK[q];
+        temp->Print(name);
+        temp = nSigP[q];
+        temp->Print(name);
+        temp = nSigEK[q];
+        temp->Print(name);
+        temp = nSigEP[q];
+        temp->Print(name);
+        temp = nSigEPi[q];
+        temp->Print(name);
+        temp = invBeta[q];
+        temp->Print(name);
+      }
+    }
     sprintf(name, "%s_%s.pdf]", FileName,FileLabel);
     temp->Print(name);
   }
