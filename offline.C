@@ -259,7 +259,7 @@ void makeHist(const char* FileName="test", Int_t trig=4)
     kpLow = -10.; kpHigh =-6.; 
     piLow = -5. ; piHigh = -2.;
     eLow = -1.  ; eHigh = 3.;
-    mpiLow = 3.5; mpiHigh = 5.5;
+    mpiLow = 3.5; mpiHigh = 8.5;
     fitKP[ptbin] = new TF1(Form("fitKP_%i",ptbin),"gaus",kpLow,kpHigh);
     fitPi[ptbin] = new TF1(Form("fitPi_%i",ptbin),"gaus",piLow,piHigh);
     fitE[ptbin]  = new TF1(Form("fitE_%i",ptbin),"gaus",eLow,eHigh);
@@ -316,7 +316,7 @@ void makeHist(const char* FileName="test", Int_t trig=4)
     fitKPD[ptbin] = new TF1(Form("drawKP_%i",ptbin),"gaus",-10,10);
     fitED[ptbin] = new TF1(Form("drawE_%i",ptbin),"gaus",-10,10);
     Double_t parPi[3],parKP[3],parE[3],parmPi[3];
-    for(Int_t i=0; i<9; i++)
+    for(Int_t i=0; i<12; i++)
     {
       if(i < 3)
         parPi[i] = par[i];
@@ -337,7 +337,7 @@ void makeHist(const char* FileName="test", Int_t trig=4)
     fitPiD[ptbin]->SetLineColor(kRed);
     fitmPiD[ptbin]->SetLineStyle(2);
     fitmPiD[ptbin]->SetLineWidth(1);
-    fitmPiD[ptbin]->SetLineColor(kBlack);
+    fitmPiD[ptbin]->SetLineColor(kGreen+3);
     fitKPD[ptbin]->SetLineStyle(2);
     fitKPD[ptbin]->SetLineWidth(1);
     fitKPD[ptbin]->SetLineColor(kCyan);

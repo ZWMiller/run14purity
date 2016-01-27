@@ -137,12 +137,12 @@ void makeHist(const char* FileName="test", Int_t trig=4)
   TH1D* projinvBeta[numPtBins];
   TF1 *fitPi[numPtBins];
   TF1 *fitKP[numPtBins];
+  TF1 *fitmPi[numPtBins];
   TF1 *fitE[numPtBins];
   TF1 *fitCom[numPtBins];
   TF1 *fitPiD[numPtBins];
   TF1 *fitmPiD[numPtBins];
   TF1 *fitKPD[numPtBins];
-  TF1 *fitmPi[numPtBins];
   TF1 *fitED[numPtBins];
   TF1 *fitComD[numPtBins];
   double eInte[numPtBins];
@@ -316,7 +316,7 @@ void makeHist(const char* FileName="test", Int_t trig=4)
     fitKPD[ptbin] = new TF1(Form("drawKP_%i",ptbin),"gaus",-10,10);
     fitED[ptbin] = new TF1(Form("drawE_%i",ptbin),"gaus",-10,10);
     Double_t parPi[3],parKP[3],parE[3],parmPi[3];
-    for(Int_t i=0; i<9; i++)
+    for(Int_t i=0; i<12; i++)
     {
       if(i < 3)
         parPi[i] = par[i];
