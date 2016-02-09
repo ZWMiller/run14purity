@@ -6,7 +6,7 @@
 #include "anaConst14.h"
 
 // Declare functions
-void makeHist(const char*,Int_t);
+void makeHist(const char*,Int_t, const char*);
 void checkBatchMode();
 Bool_t checkMakePDF();
 Bool_t checkMakeRoot();
@@ -14,17 +14,30 @@ Bool_t makePDF,makeROOT;
 Bool_t DEBUG = kFALSE;
 int isLogY = 1;
 Bool_t drawAll = kFALSE;
-
-void offline(const char* FileName="test", Int_t trig=4) //0=MB,1=HT1,2=HT2,3=HT3,4=ALL
+Bool_t withMergedPion = kTRUE;
+void offline(const char* FileName="test", Int_t trig=4, const char* Cuts="BEMC") //0=MB,1=HT1,2=HT2,3=HT3,4=ALL, BEMC, SMD, TOF
 {
+  const char* cutTypes[4] = {"BEMC","TOF","SMD","SMD2"};
+      
   if(trig == 4)
   {
     checkBatchMode();
     makePDF = checkMakePDF();
     makeROOT= checkMakeRoot();
 
-    for(Int_t i=0;i<trig;i++)
-      makeHist(FileName,i);
+    if(strncmp(Cuts,"ALL",3))
+    {
+      for(int q=0;q<4;q++)
+      {
+         for(Int_t i=0;i<trig;i++)
+           makeHist(FileName,i,cutTypes[q]);
+      }
+    }
+    else
+    {
+      for(Int_t i=0;i<trig;i++)
+        makeHist(FileName,i,Cuts);
+    }
   }
   else if(trig > 4)
     cout << "Bad Trigger Input, 0-4 only" << endl;
@@ -33,17 +46,30 @@ void offline(const char* FileName="test", Int_t trig=4) //0=MB,1=HT1,2=HT2,3=HT3
     checkBatchMode();
     makePDF = checkMakePDF();
     makeROOT= checkMakeRoot();
-    makeHist(FileName,trig);
+    if(strncmp(Cuts,"ALL",3))
+    {
+      for(int q=0;q<4;q++)
+      {
+        makeHist(FileName,trig,cutTypes[q]);
+      }
+    }
+    makeHist(FileName,trig,Cuts);
   }
 }
 
-void makeHist(const char* FileName="test", Int_t trig=4)
+void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
 {
   TH1F::SetDefaultSumw2();
   // Set Style parameters for this macro
   gStyle->SetOptTitle(1); // Show Title (off by default for cleanliness)
   gErrorIgnoreLevel = kError; // Set Verbosity Level (kPrint shows all)
-
+  char Cuts[100];
+  sprintf(Cuts,"%s",Cut);
+  if(strncmp(Cut,"BEMC",4) && strncmp(Cut,"TOF",3) && strncmp(Cut,"SMD",3) && strncmp(Cut,"SMD2",4))
+    {
+      cout << "Wrong Input for cut type: default to BEMC" << endl;
+      sprintf(Cuts, "BEMC");
+    }
 
   char FileLabel[100];
   if(trig == 0)
@@ -73,7 +99,7 @@ void makeHist(const char* FileName="test", Int_t trig=4)
   char fname[100];
   TFile* file;
   if(makeROOT){
-    sprintf(fname,"/Users/zach/Research/rootFiles/run14NPEpurity/%s_%s_processed.root",FileName,FileLabel);
+    sprintf(fname,"/Users/zach/Research/rootFiles/run14NPEpurity/%s_%s_%s_processed.root",FileName,FileLabel,Cuts);
     file = new TFile(fname,"RECREATE");
     if (file->IsOpen()==kFALSE)
     {
@@ -134,10 +160,10 @@ void makeHist(const char* FileName="test", Int_t trig=4)
 
   // Make Projections (first get 2d/3d hists, then project)
 
-  TH2F* nSigmaPiPt  = (TH2F*)f->Get(Form("nSigmaPI_Pt_BEMC_%i",trig));
-  TH2F* nSigmaKPt   = (TH2F*)f->Get(Form("nSigmaK_Pt_BEMC_%i",trig));
-  TH2F* nSigmaPPt   = (TH2F*)f->Get(Form("nSigmaP_Pt_BEMC_%i",trig));
-  TH2F* nSigmaEPt   = (TH2F*)f->Get(Form("nSigmaE_Pt_BEMC_%i",trig));
+  TH2F* nSigmaPiPt  = (TH2F*)f->Get(Form("nSigmaPI_Pt_%s_%i",Cuts,trig));
+  TH2F* nSigmaKPt   = (TH2F*)f->Get(Form("nSigmaK_Pt_%s_%i",Cuts,trig));
+  TH2F* nSigmaPPt   = (TH2F*)f->Get(Form("nSigmaP_Pt_%s_%i",Cuts,trig));
+  TH2F* nSigmaEPt   = (TH2F*)f->Get(Form("nSigmaE_Pt_%s_%i",Cuts,trig));
   TH2F* invBetaPt   = (TH2F*)f->Get(Form("invsBeta_Pt_%i",trig));
   TH2F* nSigmaEKPt  = (TH2F*)f->Get(Form("nSigmaE_KEnh_Pt_%i",trig));
   TH2F* nSigmaEPPt  = (TH2F*)f->Get(Form("nSigmaE_PEnh_Pt_%i",trig));
@@ -237,6 +263,7 @@ void makeHist(const char* FileName="test", Int_t trig=4)
     projnSigmaE[ptbin]->SetLineColor(kBlack);
     projnSigmaE[ptbin]->SetMarkerSize(0.5);
     projnSigmaE[ptbin]->GetXaxis()->SetRangeUser(-11.,16.);
+    projnSigmaE[ptbin]->GetXaxis()->SetRangeUser(-10.,10.);
     projnSigmaE[ptbin]->SetTitle("");
     projnSigmaE[ptbin]->Draw();
     lbl[ptbin]->Draw("same");
@@ -283,14 +310,17 @@ void makeHist(const char* FileName="test", Int_t trig=4)
     Double_t parS[3];
     Double_t kpLow,kpHigh,piLow,piHigh,eLow,eHigh, mpiLow, mpiHigh;
     kpLow = -10.; kpHigh =-6.; 
-    piLow = -5. ; piHigh = -2.;
-    eLow = -1.  ; eHigh = 3.;
-    mpiLow = 3.; mpiHigh = 6;
+    piLow = -4. ; piHigh = -2.;
+    eLow = -0.5  ; eHigh = 1.5;
+    mpiLow = 3.5; mpiHigh = 6;
     fitKP[ptbin] = new TF1(Form("fitKP_%i",ptbin),"gaus",kpLow,kpHigh);
     fitPi[ptbin] = new TF1(Form("fitPi_%i",ptbin),"gaus",piLow,piHigh);
     fitE[ptbin]  = new TF1(Form("fitE_%i",ptbin),"gaus",eLow,eHigh);
     fitmPi[ptbin]= new TF1(Form("fitmPi_%i",ptbin),"gaus",mpiLow,mpiHigh);
-    fitCom[ptbin]= new TF1(Form("fitCom_%i",ptbin),"gaus(0)+gaus(3)+gaus(6)+gaus(9)",-10,10);
+    if(withMergedPion)
+      fitCom[ptbin]= new TF1(Form("fitCom_%i",ptbin),"gaus(0)+gaus(3)+gaus(6)+gaus(9)",-10,10);
+    else
+      fitCom[ptbin]= new TF1(Form("fitCom_%i",ptbin),"gaus(0)+gaus(3)+gaus(6)",-10,10);
     fitCom[ptbin]->SetParName(0,"#pi C");
     fitCom[ptbin]->SetParName(1,"#pi #mu");
     fitCom[ptbin]->SetParName(2,"#pi #sigma");
@@ -330,6 +360,9 @@ void makeHist(const char* FileName="test", Int_t trig=4)
     fitE[ptbin]->GetParameters(&par[6]);
     fitmPi[ptbin]->GetParameters(&par[9]);
     fitCom[ptbin]->SetParameters(par);
+    // Constrain mean within fit range
+    fitCom[ptbin]->SetParLimits(7,-2.,4.);
+
     projnSigmaE[ptbin]->Fit(fitCom[ptbin],"R");
     projnSigmaE[ptbin]->UseCurrentStyle();
     fitCom[ptbin]->GetParameters(&par[0]);
@@ -361,20 +394,20 @@ void makeHist(const char* FileName="test", Int_t trig=4)
     fitKPD[ptbin]->SetParameters(parKP);
     fitED[ptbin]->SetParameters(parE);
     if(DEBUG) cout << "Parameters Set" << endl;
-    fitPiD[ptbin]->SetLineStyle(2);
+    fitPiD[ptbin]->SetLineStyle(1);
     fitPiD[ptbin]->SetLineWidth(1);
     fitPiD[ptbin]->SetLineColor(kRed);
-    fitmPiD[ptbin]->SetLineStyle(2);
+    fitmPiD[ptbin]->SetLineStyle(1);
     fitmPiD[ptbin]->SetLineWidth(1);
     fitmPiD[ptbin]->SetLineColor(kGreen+3);
-    fitKPD[ptbin]->SetLineStyle(2);
+    fitKPD[ptbin]->SetLineStyle(1);
     fitKPD[ptbin]->SetLineWidth(1);
     fitKPD[ptbin]->SetLineColor(kCyan);
-    fitED[ptbin]->SetLineStyle(2);
+    fitED[ptbin]->SetLineStyle(1);
     fitED[ptbin]->SetLineWidth(1);
     fitED[ptbin]->SetLineColor(kBlue);
     fitPiD[ptbin]->Draw("same");
-    fitmPiD[ptbin]->Draw("same");
+    if(withMergedPion) fitmPiD[ptbin]->Draw("same");
     fitKPD[ptbin]->Draw("same");
     fitED[ptbin]->Draw("same");
     lbl[ptbin]->Draw("same");
@@ -385,15 +418,19 @@ void makeHist(const char* FileName="test", Int_t trig=4)
     piInte[ptbin] = fitPiD[ptbin]->Integral(-1,3);
     mpiInte[ptbin] = fitmPiD[ptbin]->Integral(-1,3);
     kpInte[ptbin] = fitKPD[ptbin]->Integral(-1,3);
+
+    // Prepare for TGraphErrors
+    if(!withMergedPion)
+      mpiInte[ptbin] = 0;
     sum[ptbin] = eInte[ptbin]+piInte[ptbin]+mpiInte[ptbin]+kpInte[ptbin];
     purity[ptbin] = eInte[ptbin]/sum[ptbin];
     pT[ptbin] = (lowpt[ptbin]+highpt[ptbin])/2.;
     dx[ptbin] = (highpt[ptbin]-lowpt[ptbin])/2.;
-    dy[ptbin] = 1/eInte[ptbin]*purity[ptbin];
-
-    // Force removal of higher chi2/ndf as a test. DON'T KEEP
-    if(chiNDF >= 1.0)
-      purity[ptbin] = 0;
+    if(eInte[ptbin] <= 10)
+      dy[ptbin] = 1.0;
+    else
+      dy[ptbin] = 1/sqrt(eInte[ptbin])*purity[ptbin];
+       
 
     // Make Stats box legible
     nSigE[activeCanvas]->cd(activeBin+1);
@@ -427,10 +464,16 @@ void makeHist(const char* FileName="test", Int_t trig=4)
   purGr->SetTitle("Electron Sample Purity");
   purGr->GetXaxis()->SetTitle("p_{T} (GeV/c)");
   purGr->GetYaxis()->SetTitle("Purity");
-  purGr->GetYaxis()->SetRangeUser(0.5,1.2);
+  purGr->GetYaxis()->SetRangeUser(0.0,1.2);
   purGr->SetMarkerColor(kRed);
   purGr->SetLineColor(kRed);
   purGr->Draw("AP");
+  purGr->SetName("purity");//Set object name for write to .root
+  purGr->Write(); // write to .root
+  purGr->Fit("pol2","Q");
+  TF1* purFit = new TF1("PurityFit","pol2",lowpt[0],8.);//highpt[numPtBins-1]);
+  purGr->Fit(purFit,"RQ");
+  
   // Make PDF with output canvases
   if(makePDF)
   {
@@ -484,9 +527,9 @@ void makeHist(const char* FileName="test", Int_t trig=4)
     // Place canvases in order
     TCanvas* temp = new TCanvas();
 
-    sprintf(name, "%s_%s.pdf[", FileName,FileLabel);
+    sprintf(name, "%s_%s_%s.pdf[", FileName,FileLabel,Cuts);
     temp->Print(name);
-    sprintf(name, "%s_%s.pdf", FileName,FileLabel);
+    sprintf(name, "%s_%s_%s.pdf", FileName,FileLabel,Cuts);
     temp = fp; // print front page
     temp->Print(name);
     for(int q=0; q<numCanvas; q++)
@@ -516,7 +559,7 @@ void makeHist(const char* FileName="test", Int_t trig=4)
         temp->Print(name);
       }
     }
-    sprintf(name, "%s_%s.pdf]", FileName,FileLabel);
+    sprintf(name, "%s_%s_%s.pdf]", FileName,FileLabel,Cuts);
     temp->Print(name);
   }
 

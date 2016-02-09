@@ -1,0 +1,118 @@
+{
+  Bool_t DEBUG = kTRUE;
+  // Load all trigger type files
+  const char* baseName = "outputs/fullSample_Feb7";
+  char BEMCName[4][100],SMDLName[4][100],SMDTName[4][100],BEMCHFTName[4][100],SMDLHFTName[4][100],SMDTHFTName[4][100];
+  char trigName[4][100] = {"MB","BHT1","BHT2","BHT3"};
+  TFile* BEMC[4];
+  TFile* SMDL[4];
+  TFile* SMDT[4];
+  for(int q=0; q<4; q++)
+  {
+    sprintf(BEMCName[q],"%s_%s_BEMC_processed.root",baseName,trigName[q]);
+    BEMC[q] = new TFile(BEMCName[q],"READ");
+    sprintf(SMDLName[q],"%s_%s_SMD_processed.root",baseName,trigName[q]);
+    SMDL[q] = new TFile(SMDLName[q],"READ");
+    sprintf(SMDTName[q],"%s_%s_SMD2_processed.root",baseName,trigName[q]);
+    SMDT[q] = new TFile(SMDTName[q],"READ");
+  }
+
+  if(DEBUG)
+  {
+    for(int q=0; q<4; q++)
+    {
+      if(BEMC[q]->IsOpen() && SMDL[q]->IsOpen() && SMDT[q]->IsOpen())
+        cout << "Trig " << q << " Files Open." << endl;
+      else
+      {
+        cout << "Files Not Opened Properly." << endl;
+        exit(EXIT_FAILURE);
+      }
+    }
+  }
+  // Access histograms
+  TH1F* nSigBEMC[4];
+  TH1F* nSigSMDL[4];
+  TH1F* nSigSMDT[4];
+  TH1F* PurityBEMC[4];
+  TH1F* PuritySMDL[4];
+  TH1F* PuritySMDT[4];
+  for(int q=0; q<4; q++)
+  {
+    if(DEBUG) cout << "q: " << q << endl;
+    nSigBEMC[q]   = (TH1F*)BEMC[q]->Get("projnSigmaE_0");
+    nSigSMDL[q]   = (TH1F*)SMDL[q]->Get("projnSigmaE_0");
+    nSigSMDT[q]   = (TH1F*)SMDT[q]->Get("projnSigmaE_0");
+    PurityBEMC[q] = (TH1F*)BEMC[q]->Get("purity");
+    PuritySMDL[q] = (TH1F*)SMDL[q]->Get("purity");
+    PuritySMDT[q] = (TH1F*)SMDT[q]->Get("purity");
+  }
+  if(DEBUG)
+    cout << "Found Hists." << endl;
+
+  // Make Canvas
+  TCanvas* purityOL = new TCanvas("purityOL","purityOL",50,50,1050,1050);
+  TCanvas* nSigmaOL = new TCanvas("nSigmaOL","nSigmaOL",50,50,1050,1050);
+  purityOL->Divide(2,2);
+  nSigmaOL->Divide(2,2);
+  if(DEBUG)
+    cout << "Canvas Made." << endl;
+
+  // Plot Settings
+  for(int q=0; q<4; q++)
+  {
+    nSigBEMC[q]->SetLineColor(kRed);
+    nSigBEMC[q]->SetMarkerColor(kRed);
+    nSigBEMC[q]->SetMarkerStyle(20);
+    nSigBEMC[q]->SetTitle(Form("%s nSigmaE",trigName[q]));
+
+    nSigSMDL[q]->SetLineColor(kBlue);
+    nSigSMDL[q]->SetMarkerColor(kBlue);
+    nSigSMDL[q]->SetMarkerStyle(21);
+
+    nSigSMDT[q]->SetLineColor(kBlack);
+    nSigSMDT[q]->SetMarkerColor(kBlack);
+    nSigSMDT[q]->SetMarkerStyle(22);
+
+    PurityBEMC[q]->SetLineColor(kRed);
+    PurityBEMC[q]->SetMarkerColor(kRed);
+    PurityBEMC[q]->SetMarkerStyle(20);
+    PurityBEMC[q]->SetTitle(Form("%s Purity",trigName[q]));
+
+    PuritySMDL[q]->SetLineColor(kBlue);
+    PuritySMDL[q]->SetMarkerColor(kBlue);
+    PuritySMDL[q]->SetMarkerStyle(21);
+
+    PuritySMDT[q]->SetLineColor(kBlack);
+    PuritySMDT[q]->SetMarkerColor(kBlack);
+    PuritySMDT[q]->SetMarkerStyle(22);
+  }
+
+  if(DEBUG)
+    cout << "Settings Assigned." << endl;
+
+  // Actually Draw
+  TLegend* leg = new TLegend(0.65,0.65,0.85,0.85);
+  leg->AddEntry(nSigBEMC[0],"BEMC","lpe");
+  leg->AddEntry(nSigSMDL[0],"BEMC+SMD(Loose)","lpe");
+  leg->AddEntry(nSigSMDT[0],"BEMC+SMD(Tight)","lpe");
+  if(DEBUG)
+    cout << "Legend Made." << endl;
+
+  for(int q=0; q<4; q++)
+  {
+    nSigmaOL->cd(q+1);
+    nSigBEMC[q]->Draw();
+    nSigSMDL[q]->Draw("same");
+    nSigSMDT[q]->Draw("same");
+    leg->Draw("same");
+
+    purityOL->cd(q+1);
+    PurityBEMC[q]->Draw();
+    PuritySMDL[q]->Draw("same");
+    PuritySMDT[q]->Draw("same");
+    leg->Draw("same");
+  }
+
+
+}
