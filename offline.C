@@ -11,26 +11,26 @@ void checkBatchMode();
 Bool_t checkMakePDF();
 Bool_t checkMakeRoot();
 Bool_t makePDF,makeROOT;
-Bool_t DEBUG = kFALSE;
 int isLogY = 1;
 Bool_t drawAll = kFALSE;
 Bool_t withMergedPion = kTRUE;
+Bool_t DEBUG = kTRUE;
 void offline(const char* FileName="test", Int_t trig=4, const char* Cuts="BEMC") //0=MB,1=HT1,2=HT2,3=HT3,4=ALL, BEMC, SMD, TOF
 {
   const char* cutTypes[4] = {"BEMC","TOF","SMD","SMD2"};
-      
+
   if(trig == 4)
   {
     checkBatchMode();
     makePDF = checkMakePDF();
     makeROOT= checkMakeRoot();
 
-    if(strncmp(Cuts,"ALL",3))
+    if(!strncmp(Cuts,"ALL",3))
     {
       for(int q=0;q<4;q++)
       {
-         for(Int_t i=0;i<trig;i++)
-           makeHist(FileName,i,cutTypes[q]);
+        for(Int_t i=0;i<trig;i++)
+          makeHist(FileName,i,cutTypes[q]);
       }
     }
     else
@@ -46,6 +46,7 @@ void offline(const char* FileName="test", Int_t trig=4, const char* Cuts="BEMC")
     checkBatchMode();
     makePDF = checkMakePDF();
     makeROOT= checkMakeRoot();
+    if(DEBUG) cout << "Make Root: " << makeROOT << endl;
     if(!strncmp(Cuts,"ALL",3))
     {
       for(int q=0;q<4;q++)
@@ -66,10 +67,10 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
   char Cuts[100];
   sprintf(Cuts,"%s",Cut);
   if(strncmp(Cut,"BEMC",4) && strncmp(Cut,"TOF",3) && strncmp(Cut,"SMD",3) && strncmp(Cut,"SMD2",4))
-    {
-      cout << "Wrong Input for cut type: default to BEMC" << endl;
-      sprintf(Cuts, "BEMC");
-    }
+  {
+    cout << "Wrong Input for cut type: default to BEMC" << endl;
+    sprintf(Cuts, "BEMC");
+  }
 
   char FileLabel[100];
   if(trig == 0)
@@ -98,6 +99,7 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
 
   char fname[100];
   TFile* file;
+  if(DEBUG) cout << "Make Root: " << makeROOT << endl;
   if(makeROOT){
     sprintf(fname,"/Users/zach/Research/rootFiles/run14NPEpurity/%s_%s_%s_processed.root",FileName,FileLabel,Cuts);
     file = new TFile(fname,"RECREATE");
@@ -175,6 +177,7 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
   TH1D* projnSigmaK[numPtBins];
   TH1D* projnSigmaP[numPtBins];
   TH1D* projnSigmaE[numPtBins];
+  TH1D* drawnSigmaE[numPtBins];
   TH1D* projnSigmaEK[numPtBins];
   TH1D* projnSigmaEP[numPtBins];
   TH1D* projnSigmaEPi[numPtBins];
@@ -265,6 +268,9 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
     projnSigmaE[ptbin]->GetXaxis()->SetRangeUser(-11.,16.);
     projnSigmaE[ptbin]->GetXaxis()->SetRangeUser(-10.,10.);
     projnSigmaE[ptbin]->SetTitle("");
+    drawnSigmaE[ptbin] = (TH1D*)projnSigmaE[ptbin]->Clone();
+    drawnSigmaE[ptbin]->SetName(Form("drawnSigmaE_%i",ptbin));
+    drawnSigmaE[ptbin]->Write();
     projnSigmaE[ptbin]->Draw();
     lbl[ptbin]->Draw("same");
 
@@ -430,7 +436,7 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
       dy[ptbin] = 1.0;
     else
       dy[ptbin] = 1/sqrt(eInte[ptbin])*purity[ptbin];
-       
+
 
     // Make Stats box legible
     nSigE[activeCanvas]->cd(activeBin+1);
@@ -458,6 +464,7 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
 
   // make graphs that need all pt bins
   TGraphErrors* purGr = new TGraphErrors(numPtBins,pT,purity,dx,dy);
+  TGraphErrors* drawPur;
   purC->cd();
   purGr->SetMarkerStyle(20);
   purGr->SetMarkerSize(0.7);
@@ -470,10 +477,13 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
   purGr->Draw("AP");
   purGr->SetName("purity");//Set object name for write to .root
   purGr->Write(); // write to .root
+  drawPur = (TGraphErrors*)purGr->Clone();
+  drawPur->SetName("drawPurity");
+  drawPur->Write();
   purGr->Fit("pol2","Q");
   TF1* purFit = new TF1("PurityFit","pol2",lowpt[0],8.);//highpt[numPtBins-1]);
   purGr->Fit(purFit,"RQ");
-  
+
   // Make PDF with output canvases
   if(makePDF)
   {
@@ -563,6 +573,7 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
     temp->Print(name);
   }
 
+  if(DEBUG) cout << "Make Root: " << makeROOT << endl;
   if(makeROOT)
   {
     file->Write();
