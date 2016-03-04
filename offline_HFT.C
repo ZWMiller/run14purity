@@ -1,4 +1,4 @@
-// Offline Plots - Z. Miller Jan 6, 2016
+// Offline Plots with HFT Matching- Z. Miller Jan 6, 2016
 //--------------------
 // Updated 3/3/16 to allow for all cut sets in a single call - ZWM
 //--------------------
@@ -120,7 +120,7 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
   TFile* file;
   if(DEBUG) cout << "Make Root: " << makeROOT << endl;
   if(makeROOT){
-    sprintf(fname,"/Users/zach/Research/rootFiles/run14NPEpurity/%s_%s_%s_processed.root",FileName,FileLabel,Cuts);
+    sprintf(fname,"/Users/zach/Research/rootFiles/run14NPEpurity/%s_%s_%s_wHFT_processed.root",FileName,FileLabel,Cuts);
     file = new TFile(fname,"RECREATE");
     if (file->IsOpen()==kFALSE)
     {
@@ -184,10 +184,10 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
 
   // Make Projections (first get 2d/3d hists, then project)
 
-  TH2F* nSigmaPiPt  = (TH2F*)f->Get(Form("nSigmaPI_Pt_%s_%i",Cuts,trig));
-  TH2F* nSigmaKPt   = (TH2F*)f->Get(Form("nSigmaK_Pt_%s_%i",Cuts,trig));
-  TH2F* nSigmaPPt   = (TH2F*)f->Get(Form("nSigmaP_Pt_%s_%i",Cuts,trig));
-  TH2F* nSigmaEPt   = (TH2F*)f->Get(Form("nSigmaE_Pt_%s_%i",Cuts,trig));
+  TH2F* nSigmaPiPt  = (TH2F*)f->Get(Form("nSigmaPI_Pt_%s_HFT_%i",Cuts,trig));
+  TH2F* nSigmaKPt   = (TH2F*)f->Get(Form("nSigmaK_Pt_%s_HFT_%i",Cuts,trig));
+  TH2F* nSigmaPPt   = (TH2F*)f->Get(Form("nSigmaP_Pt_%s_HFT_%i",Cuts,trig));
+  TH2F* nSigmaEPt   = (TH2F*)f->Get(Form("nSigmaE_Pt_%s_HFT_%i",Cuts,trig));
   TH2F* invBetaPt   = (TH2F*)f->Get(Form("invsBeta_Pt_%i",trig));
   TH2F* nSigmaEKPt  = (TH2F*)f->Get(Form("nSigmaE_KEnh_Pt_%i",trig));
   TH2F* nSigmaEPPt  = (TH2F*)f->Get(Form("nSigmaE_PEnh_Pt_%i",trig));
@@ -607,9 +607,9 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
     // Place canvases in order
     TCanvas* temp = new TCanvas();
 
-    sprintf(name, "%s_%s_%s.pdf[", FileName,FileLabel,Cuts);
+    sprintf(name, "%s_%s_%s_wHFT.pdf[", FileName,FileLabel,Cuts);
     temp->Print(name);
-    sprintf(name, "%s_%s_%s.pdf", FileName,FileLabel,Cuts);
+    sprintf(name, "%s_%s_%s_wHFT.pdf", FileName,FileLabel,Cuts);
     temp = fp; // print front page
     temp->Print(name);
     for(int q=0; q<numCanvas; q++)
@@ -640,7 +640,7 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
         temp->Print(name);
       }
     }
-    sprintf(name, "%s_%s_%s.pdf]", FileName,FileLabel,Cuts);
+    sprintf(name, "%s_%s_%s_wHFT.pdf]", FileName,FileLabel,Cuts);
     temp->Print(name);
   }
 

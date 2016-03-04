@@ -1,6 +1,6 @@
 #include "anaConst14.h"
 
-int pl_Purity(){
+int pl_Purity_HFT(){
   // Set Flags for Code/Plots
   Bool_t DEBUG = kFALSE;
   int isLogY = 1;
@@ -23,7 +23,7 @@ int pl_Purity(){
 
 
   // Load all trigger type files
-  const char* baseName = "outputs/fullSample_Feb7";
+  const char* baseName = "outputs/Mar1_PuritySample";
   char BEMCName[4][100],SMDLName[4][100],SMDTName[4][100],BEMCHFTName[4][100],SMDLHFTName[4][100],SMDTHFTName[4][100];
   char trigName[4][100] = {"MB","BHT1","BHT2","BHT3"};
   TFile* BEMC[4];
@@ -31,11 +31,11 @@ int pl_Purity(){
   TFile* SMDT[4];
   for(int q=0; q<4; q++)
   {
-    sprintf(BEMCName[q],"%s_%s_BEMC_processed.root",baseName,trigName[q]);
+    sprintf(BEMCName[q],"%s_%s_BEMC_wHFT_processed.root",baseName,trigName[q]);
     BEMC[q] = new TFile(BEMCName[q],"READ");
-    sprintf(SMDLName[q],"%s_%s_SMD_processed.root",baseName,trigName[q]);
+    sprintf(SMDLName[q],"%s_%s_SMD_wHFT_processed.root",baseName,trigName[q]);
     SMDL[q] = new TFile(SMDLName[q],"READ");
-    sprintf(SMDTName[q],"%s_%s_SMD2_processed.root",baseName,trigName[q]);
+    sprintf(SMDTName[q],"%s_%s_SMD2_wHFT_processed.root",baseName,trigName[q]);
     SMDT[q] = new TFile(SMDTName[q],"READ");
   }
 
@@ -230,9 +230,9 @@ int pl_Purity(){
     
     TCanvas* temp = new TCanvas();
     char name[100];
-    sprintf(name, "%s_purityOverlays.pdf[", baseName);
+    sprintf(name, "%s_wHFT_purityOverlays.pdf[", baseName);
     temp->Print(name);
-    sprintf(name, "%s_purityOverlays.pdf", baseName);
+    sprintf(name, "%s_wHFT_purityOverlays.pdf", baseName);
     temp = fp; // print front page
     temp->Print(name);
 
@@ -247,7 +247,7 @@ int pl_Purity(){
     temp = dNdpTOL;
     temp->Print(name);
 
-    sprintf(name, "%s_purityOverlays.pdf]", baseName);
+    sprintf(name, "%s_wHFT_purityOverlays.pdf]", baseName);
     temp->Print(name);
 
 

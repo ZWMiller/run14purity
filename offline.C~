@@ -1,7 +1,26 @@
 // Offline Plots - Z. Miller Jan 6, 2016
+//--------------------
+// Updated 3/3/16 to allow for all cut sets in a single call - ZWM
+//--------------------
 //
+// root -l
 // .L offline.C
-// offline("FILENAME", triggerType) # Without .root Extension
+// offline("FILENAME", triggerType, Cutset) # File name without .root Extension
+// 
+// Trigger type: 0 = MB, 1=BHT1, 2=BHT2, 3=BHT3, 4=All
+// Cut Set Allowed Values: "BEMC", "SMD", "SMD2", "ALL"
+//
+// Each cut set and trigger type generates it's own file. Using 4 and "ALL"
+// will create all possible cut sets for each trigger. 
+//
+// Example: offline("Feb6_PuritySample",4,"ALL") - This will generate all 
+// cutset-trigger combinations for the Feb6_PuritySample. Depending on runtime
+// options selected (you will be prompted) it will generate a PDF for each set
+// with the relevant plots and a .root file containing all histograms created.
+
+// For general use, should just need to change the path where it looks for the 
+// main input files. Search for "NPEPurity" to find the path.
+
 
 #include "anaConst14.h"
 
@@ -13,8 +32,8 @@ Bool_t checkMakeRoot();
 Bool_t makePDF,makeROOT;
 int isLogY = 1;
 Bool_t drawAll = kFALSE;
-Bool_t withMergedPion = kTRUE;
-Bool_t DEBUG = kTRUE;
+Bool_t withMergedPion = kFALSE;
+Bool_t DEBUG = kFALSE;
 void offline(const char* FileName="test", Int_t trig=4, const char* Cuts="BEMC") //0=MB,1=HT1,2=HT2,3=HT3,4=ALL, BEMC, SMD, TOF
 {
   const char* cutTypes[4] = {"BEMC","TOF","SMD","SMD2"};
@@ -138,6 +157,9 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
   TCanvas* nSigEPi[numCanvas];
   TCanvas* invBeta[numCanvas];
   TCanvas* purC = new TCanvas("purC","Electron Purity",50,50,1050,1050);
+  TCanvas* parameterFitCanvas = new TCanvas("parFitCanvas","Fit Params vs pT",50,50,1050,1050);
+  parameterFitCanvas->Divide(4,3);
+  purC->Divide(1,2);
   for(Int_t q = 0; q < numCanvas; q++)
   {
     nSigPi[q] = new TCanvas(Form("nSigPi_%i",q),"nSigma Pion Projections",50,50,1050,1050);
@@ -196,7 +218,8 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
   double piInte[numPtBins];
   double mpiInte[numPtBins];
   double kpInte[numPtBins];
-  double sum[numPtBins], purity[numPtBins],pT[numPtBins];
+  double sum[numPtBins], purity[numPtBins],pT[numPtBins],dNdpT[numPtBins];
+  double parPlot[12][numPtBins], errPlot[12][numPtBins];
   double dx[numPtBins],dy[numPtBins];
   for(Int_t ptbin=0; ptbin<numPtBins; ptbin++)
   {
@@ -313,6 +336,7 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
     nSigE[activeCanvas]->cd(activeBin+1);
     gStyle->SetOptFit(1111);
     Double_t par[12];
+    Double_t parErr[12];
     Double_t parS[3];
     Double_t kpLow,kpHigh,piLow,piHigh,eLow,eHigh, mpiLow, mpiHigh;
     kpLow = -10.; kpHigh =-6.; 
@@ -339,14 +363,18 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
     fitCom[ptbin]->SetParName(9, "mer#pi C");
     fitCom[ptbin]->SetParName(10,"mer#pi #mu");
     fitCom[ptbin]->SetParName(11,"mer#pi #sigma");
-    fitCom[ptbin]->SetParLimits(0,0,1000000);
-    fitCom[ptbin]->SetParLimits(2,0,1000000);
+    /*fitCom[ptbin]->SetParLimits(0,0,1000000);
+    fitCom[ptbin]->SetParLimits(1,-6.5,-1);
+    fitCom[ptbin]->SetParLimits(2,0,2);
     fitCom[ptbin]->SetParLimits(3,0,1000000);
-    fitCom[ptbin]->SetParLimits(5,0,1000000);
+    fitCom[ptbin]->SetParLimits(4,-10,-6.6);
+    fitCom[ptbin]->SetParLimits(5,0,5);
     fitCom[ptbin]->SetParLimits(6,0,1000000);
-    fitCom[ptbin]->SetParLimits(8,0,1000000);
+    fitCom[ptbin]->SetParLimits(7,-1,2);
+    fitCom[ptbin]->SetParLimits(8,0.7,1.2);
     fitCom[ptbin]->SetParLimits(9,0,1000000);
-    fitCom[ptbin]->SetParLimits(11,0,1000000);
+    fitCom[ptbin]->SetParLimits(10,2,4);
+    fitCom[ptbin]->SetParLimits(11,0,5);*/
     fitPi[ptbin]->SetLineColor(kRed);
     fitKP[ptbin]->SetLineColor(kCyan);
     fitE[ptbin]->SetLineColor(kBlue);
@@ -366,8 +394,6 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
     fitE[ptbin]->GetParameters(&par[6]);
     fitmPi[ptbin]->GetParameters(&par[9]);
     fitCom[ptbin]->SetParameters(par);
-    // Constrain mean within fit range
-    fitCom[ptbin]->SetParLimits(7,-2.,4.);
 
     projnSigmaE[ptbin]->Fit(fitCom[ptbin],"R");
     projnSigmaE[ptbin]->UseCurrentStyle();
@@ -375,6 +401,12 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
     float chi2 = fitCom[ptbin]->GetChisquare();
     int ndf = fitCom[ptbin]->GetNDF();
     float chiNDF = chi2/(float)ndf;
+
+    for(int ii=0; ii<12; ii++)
+    {
+      parPlot[ii][ptbin] = par[ii];
+      errPlot[ii][ptbin] = parErr[ii];
+    }
 
     if(DEBUG) cout << "finish fit" << endl;
 
@@ -429,11 +461,12 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
     if(!withMergedPion)
       mpiInte[ptbin] = 0;
     sum[ptbin] = eInte[ptbin]+piInte[ptbin]+mpiInte[ptbin]+kpInte[ptbin];
+    dNdpT[ptbin] = sum[ptbin]/(highpt[ptbin]-lowpt[ptbin]);
     purity[ptbin] = eInte[ptbin]/sum[ptbin];
     pT[ptbin] = (lowpt[ptbin]+highpt[ptbin])/2.;
     dx[ptbin] = (highpt[ptbin]-lowpt[ptbin])/2.;
     if(eInte[ptbin] <= 10)
-      dy[ptbin] = 1.0;
+      dy[ptbin] = 0.0;
     else
       dy[ptbin] = 1/sqrt(eInte[ptbin])*purity[ptbin];
 
@@ -464,7 +497,28 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
 
   // make graphs that need all pt bins
   TGraphErrors* purGr = new TGraphErrors(numPtBins,pT,purity,dx,dy);
-  purC->cd();
+  TGraphErrors* dNdpTGr = new TGraphErrors(numPtBins,pT,dNdpT,dx,dy);
+  TGraphErrors* drawPur;
+  TGraphErrors* drawdNdpT;
+
+  TGraphErrors* fitPars[12];
+  for(int ii=0; ii<12; ii++)
+  {
+    parameterFitCanvas->cd(ii+1);
+    fitPars[ii] = new TGraphErrors(numPtBins,pT,parPlot[ii],dx,errPlot[ii]);
+    fitPars[ii]->SetMarkerStyle(20);
+    fitPars[ii]->SetMarkerSize(0.7);
+    fitPars[ii]->SetTitle(fitCom[0]->GetParName(ii));
+    fitPars[ii]->GetXaxis()->SetTitle("p_{T} (GeV/c)");
+    fitPars[ii]->GetYaxis()->SetTitle("Par. Value");
+    fitPars[ii]->SetMarkerColor(kRed);
+    fitPars[ii]->SetLineColor(kRed);
+    fitPars[ii]->Draw("AP");
+    fitPars[ii]->SetName("purity");//Set object name for write to .root
+    fitPars[ii]->Write(); // write to .root
+  }
+
+  purC->cd(1);
   purGr->SetMarkerStyle(20);
   purGr->SetMarkerSize(0.7);
   purGr->SetTitle("Electron Sample Purity");
@@ -476,9 +530,29 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
   purGr->Draw("AP");
   purGr->SetName("purity");//Set object name for write to .root
   purGr->Write(); // write to .root
-  purGr->Fit("pol2","Q");
-  TF1* purFit = new TF1("PurityFit","pol2",lowpt[0],8.);//highpt[numPtBins-1]);
-  purGr->Fit(purFit,"RQ");
+  drawPur = (TGraphErrors*)purGr->Clone();
+  drawPur->SetName("drawPurity");
+  drawPur->Write();
+  //purGr->Fit("pol2","Q");
+  //TF1* purFit = new TF1("PurityFit","pol2",lowpt[0],8.);//highpt[numPtBins-1]);
+  //purGr->Fit(purFit,"RQ");
+
+  purC->cd(2);
+  gPad->SetLogy(isLogY);
+  dNdpTGr->SetMarkerStyle(20);
+  dNdpTGr->SetMarkerSize(0.7);
+  dNdpTGr->SetTitle("dN/dpT In Electron Range");
+  dNdpTGr->GetXaxis()->SetTitle("p_{T} (GeV/c)");
+  dNdpTGr->GetYaxis()->SetTitle("dN/dpT");
+  dNdpTGr->SetMarkerColor(kRed);
+  dNdpTGr->SetLineColor(kRed);
+  dNdpTGr->Draw("AP");
+  dNdpTGr->SetName("dNdpT");//Set object name for write to .root
+  dNdpTGr->Write(); // write to .root
+  drawdNdpT = (TGraphErrors*)dNdpTGr->Clone();
+  drawdNdpT->SetName("drawdNdpT");
+  drawdNdpT->Write();
+
 
   // Make PDF with output canvases
   if(makePDF)
@@ -526,7 +600,7 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
 
     sprintf(tlName,"Event:            #left|V_{z}#right| < 6 cm; #left|#DeltaV_{z}#right| < 4 cm");
     tl.DrawLatex(0.1, 0.45,tlName);
-    sprintf(tlName,"Triggers:            MB");
+    sprintf(tlName,"Triggers:            %s %s",FileLabel,Cuts);
     tl.DrawLatex(0.1, 0.4,tlName);
 
 
@@ -545,7 +619,8 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
     }
     temp = purC;
     temp->Print(name);
-
+    temp = parameterFitCanvas;
+    temp->Print(name);
     if(drawAll){
       for(int q=0; q<numCanvas; q++)
       {

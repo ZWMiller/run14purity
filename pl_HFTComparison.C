@@ -1,6 +1,6 @@
 #include "anaConst14.h"
 
-int pl_Purity(){
+int pl_HFTComparison(){
   // Set Flags for Code/Plots
   Bool_t DEBUG = kFALSE;
   int isLogY = 1;
@@ -23,25 +23,39 @@ int pl_Purity(){
 
 
   // Load all trigger type files
-  const char* baseName = "outputs/fullSample_Feb7";
+  const char* baseName = "outputs/Mar1_PuritySample";
   char BEMCName[4][100],SMDLName[4][100],SMDTName[4][100],BEMCHFTName[4][100],SMDLHFTName[4][100],SMDTHFTName[4][100];
   char trigName[4][100] = {"MB","BHT1","BHT2","BHT3"};
   TFile* BEMC[4];
   TFile* SMDL[4];
   TFile* SMDT[4];
+  TFile* BEMCh[4];
+  TFile* SMDLh[4];
+  TFile* SMDTh[4];
   for(int q=0; q<4; q++)
   {
+    //without HFT
     sprintf(BEMCName[q],"%s_%s_BEMC_processed.root",baseName,trigName[q]);
     BEMC[q] = new TFile(BEMCName[q],"READ");
     sprintf(SMDLName[q],"%s_%s_SMD_processed.root",baseName,trigName[q]);
     SMDL[q] = new TFile(SMDLName[q],"READ");
     sprintf(SMDTName[q],"%s_%s_SMD2_processed.root",baseName,trigName[q]);
     SMDT[q] = new TFile(SMDTName[q],"READ");
+    
+    // with HFT
+    sprintf(BEMCName[q],"%s_%s_BEMC_wHFT_processed.root",baseName,trigName[q]);
+    BEMCh[q] = new TFile(BEMCName[q],"READ");
+    sprintf(SMDLName[q],"%s_%s_SMD_wHFT_processed.root",baseName,trigName[q]);
+    SMDLh[q] = new TFile(SMDLName[q],"READ");
+    sprintf(SMDTName[q],"%s_%s_SMD2_wHFT_processed.root",baseName,trigName[q]);
+    SMDTh[q] = new TFile(SMDTName[q],"READ");
+
   }
 
   for(int i=0; i<4; i++)
   {
-    if(BEMC[i]->IsOpen() && SMDL[i]->IsOpen() && SMDT[i]->IsOpen())
+    if(BEMC[i]->IsOpen() && SMDL[i]->IsOpen() && SMDT[i]->IsOpen() &&
+       BEMCh[i]->IsOpen() && SMDLh[i]->IsOpen() && SMDTh[i]->IsOpen())
       cout << "Trig " << i << " Files Open." << endl;
     else
     {
@@ -60,6 +74,16 @@ int pl_Purity(){
   TH1F* dNdpTBEMC[4];
   TH1F* dNdpTSMDL[4];
   TH1F* dNdpTSMDT[4];
+  TH1F* nSigBEMCh[4][numPtBins];
+  TH1F* nSigSMDLh[4][numPtBins];
+  TH1F* nSigSMDTh[4][numPtBins];
+  TH1F* PurityBEMCh[4];
+  TH1F* PuritySMDLh[4];
+  TH1F* PuritySMDTh[4];
+  TH1F* dNdpTBEMCh[4];
+  TH1F* dNdpTSMDLh[4];
+  TH1F* dNdpTSMDTh[4];
+
   for(int w=0; w<4; w++)
   {
     if(DEBUG) cout << "w: " << w << endl;
@@ -67,7 +91,11 @@ int pl_Purity(){
     {
       nSigBEMC[w][ptbin] = (TH1F*)BEMC[w]->Get(Form("drawnSigmaE_%i",ptbin));
       nSigSMDL[w][ptbin] = (TH1F*)SMDL[w]->Get(Form("drawnSigmaE_%i",ptbin));
-      nSigSMDT[w][ptbin] = (TH1F*)SMDT[w]->Get(Form("drawnSigmaE_%i",ptbin));
+      nSigSMDT[w][ptbin] = (TH1F*)SMDT[w]->Get(Form("drawnSigmaE_%i",ptbin)); 
+      nSigBEMCh[w][ptbin] = (TH1F*)BEMCh[4]->Get(Form("drawnSigmaE_%i",ptbin));
+      nSigSMDLh[w][ptbin] = (TH1F*)SMDLh[4]->Get(Form("drawnSigmaE_%i",ptbin));
+      nSigSMDTh[w][ptbin] = (TH1F*)SMDTh[4]->Get(Form("drawnSigmaE_%i",ptbin));
+
     }
     PurityBEMC[w] = (TH1F*)BEMC[w]->Get("drawPurity");
     PuritySMDL[w] = (TH1F*)SMDL[w]->Get("drawPurity");
@@ -75,26 +103,22 @@ int pl_Purity(){
     dNdpTBEMC[w] = (TH1F*)BEMC[w]->Get("drawdNdpT");
     dNdpTSMDL[w] = (TH1F*)SMDL[w]->Get("drawdNdpT");
     dNdpTSMDT[w] = (TH1F*)SMDT[w]->Get("drawdNdpT");
+    PurityBEMCh[w] = (TH1F*)BEMCh[w]->Get("drawPurity");
+    PuritySMDLh[w] = (TH1F*)SMDLh[w]->Get("drawPurity");
+    PuritySMDTh[w] = (TH1F*)SMDTh[w]->Get("drawPurity");
   }
   if(DEBUG)
     cout << "Found Hists." << endl;
 
   // Make Canvas
-  TCanvas* purityOL = new TCanvas("purityOL","purityOL",50,50,1050,1050);
-  TCanvas* dNdpTOL = new TCanvas("dNdpTOL","dNdpTOL",50,50,1050,1050);
-  TCanvas* nSigmaOL[numPtBins];
+  TCanvas* purityOL[4];
   for(int ptbin=0; ptbin<numPtBins; ptbin++)
   {
-    nSigmaOL[ptbin]= new TCanvas(Form("nSigmaOL_%i",ptbin),Form("%.2f < pT < %.2f",lowpt[ptbin],highpt[ptbin]),50,50,1050,1050);
-    nSigmaOL[ptbin]->Divide(2,2);
-
     sprintf(textLabel,"%.2f < P_{T} < %.2f",lowpt[ptbin],highpt[ptbin]);
     lbl[ptbin] = new TPaveText(.67,.25,.85,.3,Form("NB NDC%i",ptbin));
     lbl[ptbin]->AddText(textLabel);
     lbl[ptbin]->SetFillColor(kWhite);
   }
-  purityOL->Divide(2,2);
-  dNdpTOL->Divide(2,2);
 
   if(DEBUG)
     cout << "Canvas Made." << endl;
@@ -102,52 +126,39 @@ int pl_Purity(){
   // Plot Settings
   for(int r=0; r<4; r++)
   {
-    for(int ptbin=0; ptbin<numPtBins; ptbin++)
-    {
-      nSigBEMC[r][ptbin]->SetLineColor(kRed);
-      nSigBEMC[r][ptbin]->SetMarkerColor(kRed);
-      nSigBEMC[r][ptbin]->SetMarkerStyle(20);
-      nSigBEMC[r][ptbin]->SetTitle(Form("%s nSigmaE, %.2f < pT < %.2f",trigName[r],lowpt[ptbin],highpt[ptbin]));
-      nSigBEMC[r][ptbin]->GetXaxis()->SetTitle("nSigmaE");
-      nSigBEMC[r][ptbin]->GetYaxis()->SetTitle("Counts");
-      if(DEBUG) cout << "after BEMC" << endl;
-
-      nSigSMDL[r][ptbin]->SetLineColor(kBlue);
-      nSigSMDL[r][ptbin]->SetMarkerColor(kBlue);
-      nSigSMDL[r][ptbin]->SetMarkerStyle(21);
-      if(DEBUG) cout << "after SMDL" << endl;
-
-      nSigSMDT[r][ptbin]->SetLineColor(kBlack);
-      nSigSMDT[r][ptbin]->SetMarkerColor(kBlack);
-      nSigSMDT[r][ptbin]->SetMarkerStyle(22);
-    }
-    if(DEBUG) cout << "after ptbin loop" << endl;
+    purityOL[r] = new TCanvas(Form("purityOL_%i",r),"Purity Overlays",50,50,1050,1050);
+    purityOL[r]->Divide(2,2);
 
     PurityBEMC[r]->SetLineColor(kRed);
     PurityBEMC[r]->SetMarkerColor(kRed);
     PurityBEMC[r]->SetMarkerStyle(20);
-    PurityBEMC[r]->SetTitle(Form("%s Purity",trigName[r]));
+    PurityBEMC[r]->SetTitle(Form("%s BEMC Purity",trigName[r]));
 
-    PuritySMDL[r]->SetLineColor(kBlue);
-    PuritySMDL[r]->SetMarkerColor(kBlue);
+    PuritySMDL[r]->SetLineColor(kRed);
+    PuritySMDL[r]->SetMarkerColor(kRed);
     PuritySMDL[r]->SetMarkerStyle(21);
+    PuritySMDL[r]->SetTitle(Form("%s SMD Purity",trigName[r]));
 
-    PuritySMDT[r]->SetLineColor(kBlack);
-    PuritySMDT[r]->SetMarkerColor(kBlack);
+    PuritySMDT[r]->SetLineColor(kRed);
+    PuritySMDT[r]->SetMarkerColor(kRed);
     PuritySMDT[r]->SetMarkerStyle(22);
+    PuritySMDT[r]->SetTitle(Form("%s SMD2 Purity",trigName[r]));
 
-    dNdpTBEMC[r]->SetLineColor(kRed);
-    dNdpTBEMC[r]->SetMarkerColor(kRed);
-    dNdpTBEMC[r]->SetMarkerStyle(20);
-    dNdpTBEMC[r]->SetTitle(Form("%s dNdpT",trigName[r]));
+    PurityBEMCh[r]->SetLineColor(kBlack);
+    PurityBEMCh[r]->SetMarkerColor(kBlack);
+    PurityBEMCh[r]->SetMarkerStyle(20);
+    PurityBEMCh[r]->SetTitle(Form("%s BEMC Purity",trigName[r]));
 
-    dNdpTSMDL[r]->SetLineColor(kBlue);
-    dNdpTSMDL[r]->SetMarkerColor(kBlue);
-    dNdpTSMDL[r]->SetMarkerStyle(21);
+    PuritySMDLh[r]->SetLineColor(kBlack);
+    PuritySMDLh[r]->SetMarkerColor(kBlack);
+    PuritySMDLh[r]->SetMarkerStyle(21);
+    PuritySMDLh[r]->SetTitle(Form("%s SMD Purity",trigName[r]));
 
-    dNdpTSMDT[r]->SetLineColor(kBlack);
-    dNdpTSMDT[r]->SetMarkerColor(kBlack);
-    dNdpTSMDT[r]->SetMarkerStyle(22);
+    PuritySMDTh[r]->SetLineColor(kBlack);
+    PuritySMDTh[r]->SetMarkerColor(kBlack);
+    PuritySMDTh[r]->SetMarkerStyle(22);
+    PuritySMDTh[r]->SetTitle(Form("%s SMD2 Purity",trigName[r]));
+
   }
 
   if(DEBUG)
@@ -157,35 +168,24 @@ int pl_Purity(){
 
   // Use input for only one ptbin in legend. They're all the same, no need to loop.
   TLegend* leg = new TLegend(0.55,0.55,0.85,0.85);
-  leg->AddEntry(nSigBEMC[0][0],"BEMC","lpe");
-  leg->AddEntry(nSigSMDL[0][0],"BEMC+SMD(Loose)","lpe");
-  leg->AddEntry(nSigSMDT[0][0],"BEMC+SMD(Tight)","lpe");
+  leg->AddEntry(PurityBEMC[0],"W/O HFT","lpe");
+  leg->AddEntry(PurityBEMCh[0],"W/ HFT","lpe");
   if(DEBUG)
     cout << "Legend Made." << endl;
 
   for(int t=0; t<4; t++)
   {
-    for(int ptbin=0; ptbin<numPtBins; ptbin++)
-    {
-      nSigmaOL[ptbin]->cd(t+1);
-      gPad->SetLogy(isLogY);  
-      nSigBEMC[t][ptbin]->Draw();
-      nSigSMDL[t][ptbin]->Draw("same");
-      nSigSMDT[t][ptbin]->Draw("same");
-      leg->Draw("same");
-      lbl[ptbin]->Draw("same");
-    }
-
-    purityOL->cd(t+1);
+    purityOL[t]->cd(1);
     PurityBEMC[t]->Draw("Ape");
-    PuritySMDL[t]->Draw("same pe");
-    PuritySMDT[t]->Draw("same pe");
+    PurityBEMCh[t]->Draw("same pe");
     leg->Draw("same");
-
-    dNdpTOL->cd(t+1);
-    dNdpTBEMC[t]->Draw("Ape");
-    dNdpTSMDL[t]->Draw("same pe");
-    dNdpTSMDT[t]->Draw("same pe");
+    purityOL[t]->cd(2);
+    PuritySMDL[t]->Draw("Ape");
+    PuritySMDLh[t]->Draw("same pe");
+    leg->Draw("same");
+    purityOL[t]->cd(3);
+    PuritySMDT[t]->Draw("Ape");
+    PuritySMDTh[t]->Draw("same pe");
     leg->Draw("same");
   }
 
@@ -230,24 +230,19 @@ int pl_Purity(){
     
     TCanvas* temp = new TCanvas();
     char name[100];
-    sprintf(name, "%s_purityOverlays.pdf[", baseName);
+    sprintf(name, "%s_purityOverlays_CompareHFT.pdf[", baseName);
     temp->Print(name);
-    sprintf(name, "%s_purityOverlays.pdf", baseName);
+    sprintf(name, "%s_purityOverlays_CompareHFT.pdf", baseName);
     temp = fp; // print front page
     temp->Print(name);
 
-    for(int q=0; q<numPtBins; q++)
+    for(int q=0; q<4; q++)
     {
-      temp = nSigmaOL[q]; // print data canvases
+      temp = purityOL[q]; // print data canvases
       temp->Print(name);
     }
-    temp = purityOL;
-    temp->Print(name);
-  
-    temp = dNdpTOL;
-    temp->Print(name);
 
-    sprintf(name, "%s_purityOverlays.pdf]", baseName);
+    sprintf(name, "%s_purityOverlays_CompareHFT.pdf]", baseName);
     temp->Print(name);
 
 

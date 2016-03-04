@@ -23,7 +23,7 @@ int pl_Purity(){
 
 
   // Load all trigger type files
-  const char* baseName = "outputs/fullSample_Feb7";
+  const char* baseName = "outputs/Mar1_PuritySample";
   char BEMCName[4][100],SMDLName[4][100],SMDTName[4][100],BEMCHFTName[4][100],SMDLHFTName[4][100],SMDTHFTName[4][100];
   char trigName[4][100] = {"MB","BHT1","BHT2","BHT3"};
   TFile* BEMC[4];
@@ -57,6 +57,9 @@ int pl_Purity(){
   TH1F* PurityBEMC[4];
   TH1F* PuritySMDL[4];
   TH1F* PuritySMDT[4];
+  TH1F* dNdpTBEMC[4];
+  TH1F* dNdpTSMDL[4];
+  TH1F* dNdpTSMDT[4];
   for(int w=0; w<4; w++)
   {
     if(DEBUG) cout << "w: " << w << endl;
@@ -69,12 +72,16 @@ int pl_Purity(){
     PurityBEMC[w] = (TH1F*)BEMC[w]->Get("drawPurity");
     PuritySMDL[w] = (TH1F*)SMDL[w]->Get("drawPurity");
     PuritySMDT[w] = (TH1F*)SMDT[w]->Get("drawPurity");
+    dNdpTBEMC[w] = (TH1F*)BEMC[w]->Get("drawdNdpT");
+    dNdpTSMDL[w] = (TH1F*)SMDL[w]->Get("drawdNdpT");
+    dNdpTSMDT[w] = (TH1F*)SMDT[w]->Get("drawdNdpT");
   }
   if(DEBUG)
     cout << "Found Hists." << endl;
 
   // Make Canvas
   TCanvas* purityOL = new TCanvas("purityOL","purityOL",50,50,1050,1050);
+  TCanvas* dNdpTOL = new TCanvas("dNdpTOL","dNdpTOL",50,50,1050,1050);
   TCanvas* nSigmaOL[numPtBins];
   for(int ptbin=0; ptbin<numPtBins; ptbin++)
   {
@@ -87,6 +94,7 @@ int pl_Purity(){
     lbl[ptbin]->SetFillColor(kWhite);
   }
   purityOL->Divide(2,2);
+  dNdpTOL->Divide(2,2);
 
   if(DEBUG)
     cout << "Canvas Made." << endl;
@@ -127,6 +135,19 @@ int pl_Purity(){
     PuritySMDT[r]->SetLineColor(kBlack);
     PuritySMDT[r]->SetMarkerColor(kBlack);
     PuritySMDT[r]->SetMarkerStyle(22);
+
+    dNdpTBEMC[r]->SetLineColor(kRed);
+    dNdpTBEMC[r]->SetMarkerColor(kRed);
+    dNdpTBEMC[r]->SetMarkerStyle(20);
+    dNdpTBEMC[r]->SetTitle(Form("%s dNdpT",trigName[r]));
+
+    dNdpTSMDL[r]->SetLineColor(kBlue);
+    dNdpTSMDL[r]->SetMarkerColor(kBlue);
+    dNdpTSMDL[r]->SetMarkerStyle(21);
+
+    dNdpTSMDT[r]->SetLineColor(kBlack);
+    dNdpTSMDT[r]->SetMarkerColor(kBlack);
+    dNdpTSMDT[r]->SetMarkerStyle(22);
   }
 
   if(DEBUG)
@@ -159,6 +180,12 @@ int pl_Purity(){
     PurityBEMC[t]->Draw("Ape");
     PuritySMDL[t]->Draw("same pe");
     PuritySMDT[t]->Draw("same pe");
+    leg->Draw("same");
+
+    dNdpTOL->cd(t+1);
+    dNdpTBEMC[t]->Draw("Ape");
+    dNdpTSMDL[t]->Draw("same pe");
+    dNdpTSMDT[t]->Draw("same pe");
     leg->Draw("same");
   }
 
@@ -195,6 +222,11 @@ int pl_Purity(){
     tl.SetTextColor(kBlack);
     tl.SetTextSize(0.03);
     tl.DrawLatex(0.1, 0.14, titlename);
+     sprintf(tlName,"Study of Various Cut Sets on Inclusive Electron Purity.");
+    tl.DrawLatex(0.1, 0.75,tlName);
+    sprintf(tlName,"Z.W. Miller - UIC");
+    tl.DrawLatex(0.1, 0.67,tlName);
+
     
     TCanvas* temp = new TCanvas();
     char name[100];
@@ -210,6 +242,9 @@ int pl_Purity(){
       temp->Print(name);
     }
     temp = purityOL;
+    temp->Print(name);
+  
+    temp = dNdpTOL;
     temp->Print(name);
 
     sprintf(name, "%s_purityOverlays.pdf]", baseName);
