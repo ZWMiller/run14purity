@@ -102,8 +102,11 @@ int pl_Purity(){
   // Plot Settings
   for(int r=0; r<4; r++)
   {
+    if(DEBUG) cout << "r: " << r << endl;
     for(int ptbin=0; ptbin<numPtBins; ptbin++)
     {
+      if(lowpt[ptbin] < anaConst::trigThreshold[r]) continue;
+
       nSigBEMC[r][ptbin]->SetLineColor(kRed);
       nSigBEMC[r][ptbin]->SetMarkerColor(kRed);
       nSigBEMC[r][ptbin]->SetMarkerStyle(20);
@@ -120,6 +123,7 @@ int pl_Purity(){
       nSigSMDT[r][ptbin]->SetLineColor(kBlack);
       nSigSMDT[r][ptbin]->SetMarkerColor(kBlack);
       nSigSMDT[r][ptbin]->SetMarkerStyle(22);
+      if(DEBUG) cout << "after SMDT" << endl;
     }
     if(DEBUG) cout << "after ptbin loop" << endl;
 
@@ -167,6 +171,7 @@ int pl_Purity(){
   {
     for(int ptbin=0; ptbin<numPtBins; ptbin++)
     {
+      if(lowpt[ptbin] < anaConst::trigThreshold[t]) continue;
       nSigmaOL[ptbin]->cd(t+1);
       gPad->SetLogy(isLogY);  
       nSigBEMC[t][ptbin]->Draw();
@@ -178,14 +183,14 @@ int pl_Purity(){
 
     purityOL->cd(t+1);
     PurityBEMC[t]->Draw("Ape");
-    PuritySMDL[t]->Draw("same pe");
-    PuritySMDT[t]->Draw("same pe");
+    if(t!=0)PuritySMDL[t]->Draw("same pe"); // Doesn't make sense for MB (t=0)
+    if(t!=0)PuritySMDT[t]->Draw("same pe"); // Doesn't make sense for MB (t=0)
     leg->Draw("same");
 
     dNdpTOL->cd(t+1);
     dNdpTBEMC[t]->Draw("Ape");
-    dNdpTSMDL[t]->Draw("same pe");
-    dNdpTSMDT[t]->Draw("same pe");
+    if(t!=0)dNdpTSMDL[t]->Draw("same pe");
+    if(t!=0)dNdpTSMDT[t]->Draw("same pe");
     leg->Draw("same");
   }
 

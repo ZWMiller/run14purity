@@ -34,10 +34,11 @@ int isLogY = 1;
 Bool_t drawAll = kFALSE;
 Bool_t withMergedPion = kFALSE;
 Bool_t DEBUG = kFALSE;
+Bool_t wHFT = kFALSE;
 void offline(const char* FileName="test", Int_t trig=4, const char* Cuts="BEMC") //0=MB,1=HT1,2=HT2,3=HT3,4=ALL, BEMC, SMD, TOF
 {
   const char* cutTypes[4] = {"BEMC","TOF","SMD","SMD2"};
-
+  if(wHFT) cout << "---Running with HFT Match Requirement!---" << endl;
   if(trig == 4)
   {
     checkBatchMode();
@@ -121,6 +122,8 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
   if(DEBUG) cout << "Make Root: " << makeROOT << endl;
   if(makeROOT){
     sprintf(fname,"/Users/zach/Research/rootFiles/run14NPEpurity/%s_%s_%s_processed.root",FileName,FileLabel,Cuts);
+    if(wHFT)
+      sprintf(fname,"/Users/zach/Research/rootFiles/run14NPEpurity/%s_%s_%s_wHFT_processed.root",FileName,FileLabel,Cuts);
     file = new TFile(fname,"RECREATE");
     if (file->IsOpen()==kFALSE)
     {
@@ -158,7 +161,11 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
   TCanvas* invBeta[numCanvas];
   TCanvas* purC = new TCanvas("purC","Electron Purity",50,50,1050,1050);
   TCanvas* parameterFitCanvas = new TCanvas("parFitCanvas","Fit Params vs pT",50,50,1050,1050);
-  parameterFitCanvas->Divide(4,3);
+  if(withMergedPion)
+    parameterFitCanvas->Divide(4,3);
+  else
+    parameterFitCanvas->Divide(3,3);
+
   purC->Divide(1,2);
   for(Int_t q = 0; q < numCanvas; q++)
   {
@@ -188,6 +195,13 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
   TH2F* nSigmaKPt   = (TH2F*)f->Get(Form("nSigmaK_Pt_%s_%i",Cuts,trig));
   TH2F* nSigmaPPt   = (TH2F*)f->Get(Form("nSigmaP_Pt_%s_%i",Cuts,trig));
   TH2F* nSigmaEPt   = (TH2F*)f->Get(Form("nSigmaE_Pt_%s_%i",Cuts,trig));
+  if(wHFT)
+  {
+    nSigmaPiPt  = (TH2F*)f->Get(Form("nSigmaPI_Pt_%s_HFT_%i",Cuts,trig));
+    nSigmaKPt   = (TH2F*)f->Get(Form("nSigmaK_Pt_%s_HFT_%i",Cuts,trig));
+    nSigmaPPt   = (TH2F*)f->Get(Form("nSigmaP_Pt_%s_HFT_%i",Cuts,trig));
+    nSigmaEPt   = (TH2F*)f->Get(Form("nSigmaE_Pt_%s_HFT_%i",Cuts,trig));
+  }
   TH2F* invBetaPt   = (TH2F*)f->Get(Form("invsBeta_Pt_%i",trig));
   TH2F* nSigmaEKPt  = (TH2F*)f->Get(Form("nSigmaE_KEnh_Pt_%i",trig));
   TH2F* nSigmaEPPt  = (TH2F*)f->Get(Form("nSigmaE_PEnh_Pt_%i",trig));
@@ -221,6 +235,8 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
   double sum[numPtBins], purity[numPtBins],pT[numPtBins],dNdpT[numPtBins];
   double parPlot[12][numPtBins], errPlot[12][numPtBins];
   double dx[numPtBins],dy[numPtBins];
+  double parStorage[12] = {0.};
+  double parErrStorage[12] = {0.};
   for(Int_t ptbin=0; ptbin<numPtBins; ptbin++)
   {
     projnSigmaPi[ptbin] = nSigmaPiPt->ProjectionY(Form("projnSigmaPi_%i",ptbin),nSigmaPiPt->GetXaxis()->FindBin(lowpt[ptbin]),nSigmaPiPt->GetXaxis()->FindBin(highpt[ptbin])-1);
@@ -236,6 +252,15 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
 
   // Analyze the projections
   for(Int_t ptbin = 0; ptbin < numPtBins; ptbin++){
+     // Clear the variables of interest
+    purity[ptbin] = dNdpT[ptbin] = dx[ptbin] = dy[ptbin] = 0;
+    for(int ii=0; ii<12; ii++)
+    {
+      parPlot[ii][ptbin] = errPlot[ii][ptbin];
+    }
+
+    // Don't analyze below the trigger turn on curve
+    if(lowpt[ptbin] < anaConst::trigThreshold[trig]) continue; 
 
     // Init necessary plotting tools
     lbl[ptbin] = new TPaveText(.67,.25,.85,.3,Form("NB NDC%i",ptbin));
@@ -245,7 +270,7 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
 
     int activeCanvas = (int)ptbin/9;
     int activeBin = ptbin - activeCanvas*9;
-    cout << ptbin << ": " << activeCanvas << " " << activeBin << endl;
+    if(DEBUG)cout << ptbin << ": " << activeCanvas << " " << activeBin << endl;
 
     if(drawAll){
       nSigPi[activeCanvas]->cd(activeBin+1);
@@ -341,7 +366,7 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
     Double_t kpLow,kpHigh,piLow,piHigh,eLow,eHigh, mpiLow, mpiHigh;
     kpLow = -10.; kpHigh =-6.; 
     piLow = -4. ; piHigh = -2.;
-    eLow = -0.5  ; eHigh = 1.5;
+    eLow = -1.0  ; eHigh = 2.0;
     mpiLow = 3.5; mpiHigh = 6;
     fitKP[ptbin] = new TF1(Form("fitKP_%i",ptbin),"gaus",kpLow,kpHigh);
     fitPi[ptbin] = new TF1(Form("fitPi_%i",ptbin),"gaus",piLow,piHigh);
@@ -363,18 +388,7 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
     fitCom[ptbin]->SetParName(9, "mer#pi C");
     fitCom[ptbin]->SetParName(10,"mer#pi #mu");
     fitCom[ptbin]->SetParName(11,"mer#pi #sigma");
-    /*fitCom[ptbin]->SetParLimits(0,0,1000000);
-    fitCom[ptbin]->SetParLimits(1,-6.5,-1);
-    fitCom[ptbin]->SetParLimits(2,0,2);
-    fitCom[ptbin]->SetParLimits(3,0,1000000);
-    fitCom[ptbin]->SetParLimits(4,-10,-6.6);
-    fitCom[ptbin]->SetParLimits(5,0,5);
-    fitCom[ptbin]->SetParLimits(6,0,1000000);
-    fitCom[ptbin]->SetParLimits(7,-1,2);
-    fitCom[ptbin]->SetParLimits(8,0.7,1.2);
-    fitCom[ptbin]->SetParLimits(9,0,1000000);
-    fitCom[ptbin]->SetParLimits(10,2,4);
-    fitCom[ptbin]->SetParLimits(11,0,5);*/
+
     fitPi[ptbin]->SetLineColor(kRed);
     fitKP[ptbin]->SetLineColor(kCyan);
     fitE[ptbin]->SetLineColor(kBlue);
@@ -385,19 +399,52 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
     fitKP[ptbin]->SetLineWidth(1);
     fitE[ptbin]->SetLineWidth(1);
     fitCom[ptbin]->SetLineWidth(2);
-    projnSigmaE[ptbin]->Fit(fitPi[ptbin],"R");
-    projnSigmaE[ptbin]->Fit(fitKP[ptbin],"R");
-    projnSigmaE[ptbin]->Fit(fitE[ptbin],"R");
-    projnSigmaE[ptbin]->Fit(fitmPi[ptbin],"R");
-    fitPi[ptbin]->GetParameters(&par[0]);
-    fitKP[ptbin]->GetParameters(&par[3]);
-    fitE[ptbin]->GetParameters(&par[6]);
-    fitmPi[ptbin]->GetParameters(&par[9]);
-    fitCom[ptbin]->SetParameters(par);
+    
+    
+    // If this is the first bin of the trigger, fit the roughly
+    // expected areas for each Gaussian to get starting pars for total fit
+    if(parStorage[0] == 0.)
+    {
+      projnSigmaE[ptbin]->Fit(fitPi[ptbin],"R");
+      projnSigmaE[ptbin]->Fit(fitKP[ptbin],"R");
+      projnSigmaE[ptbin]->Fit(fitE[ptbin],"R");
+      projnSigmaE[ptbin]->Fit(fitmPi[ptbin],"R");
 
+      fitPi[ptbin]->GetParameters(&par[0]);
+     // fitPi[ptbin]->GetParErrors(&parErr[0]);
+      fitKP[ptbin]->GetParameters(&par[3]);
+      //fitKP[ptbin]->GetParErrors(&parErr[3]);
+      fitE[ptbin]->GetParameters(&par[6]);
+      //fitE[ptbin]->GetParErrors(&parErr[6]);
+      fitmPi[ptbin]->GetParameters(&par[9]);
+      //fitmPi[ptbin]->GetParErrors(&parErr[9]);
+      fitCom[ptbin]->SetParameters(par);
+      //fitCom[ptbin]->SetParErrors(parErr);
+    }
+    else // Otherwise, use results from last fit as input
+      fitCom[ptbin]->SetParameters(parStorage);
+
+    // Apply parameter constraints
+    //  fitCom[ptbin]->SetParLimits(0,0,1000000);
+    //  fitCom[ptbin]->SetParLimits(1,-6.5,-1);
+      fitCom[ptbin]->SetParLimits(2,0,1.5);
+    //  fitCom[ptbin]->SetParLimits(3,0,1000000);
+    //  fitCom[ptbin]->SetParLimits(4,-10,-6.6);
+      fitCom[ptbin]->SetParLimits(5,0,1.5);
+    //  fitCom[ptbin]->SetParLimits(6,0,1000000);
+      fitCom[ptbin]->SetParLimits(7,-1,2);
+      fitCom[ptbin]->SetParLimits(8,0,1.5);
+    //  fitCom[ptbin]->SetParLimits(9,0,1000000);
+    //  fitCom[ptbin]->SetParLimits(10,2,4);
+      fitCom[ptbin]->SetParLimits(11,0,1.5);
+
+    
     projnSigmaE[ptbin]->Fit(fitCom[ptbin],"R");
     projnSigmaE[ptbin]->UseCurrentStyle();
     fitCom[ptbin]->GetParameters(&par[0]);
+    //fitCom[ptbin]->GetParErrors(&parErr[0]);
+    fitCom[ptbin]->GetParameters(&parStorage[0]);
+    //fitCom[ptbin]->GetParErrors(&parErrStorage[0]);
     float chi2 = fitCom[ptbin]->GetChisquare();
     int ndf = fitCom[ptbin]->GetNDF();
     float chiNDF = chi2/(float)ndf;
@@ -502,6 +549,7 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
   TGraphErrors* drawdNdpT;
 
   TGraphErrors* fitPars[12];
+  int numParams = 12; if(!withMergedPion) numParams = 9;
   for(int ii=0; ii<12; ii++)
   {
     parameterFitCanvas->cd(ii+1);
@@ -595,9 +643,11 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
     tl.DrawLatex(0.1, 0.7,tlName);
     sprintf(tlName,"                            nHitFit/Max > 0.52;    #left|#eta#right| < 0.7;");
     tl.DrawLatex(0.1, 0.65,tlName);
-    sprintf(tlName,"                            isHFTTrack();");
-    tl.DrawLatex(0.1, 0.6,tlName);
-
+    if(wHFT)
+    {
+      sprintf(tlName,"                            isHFTTrack();");
+      tl.DrawLatex(0.1, 0.6,tlName);
+    }
     sprintf(tlName,"Event:            #left|V_{z}#right| < 6 cm; #left|#DeltaV_{z}#right| < 4 cm");
     tl.DrawLatex(0.1, 0.45,tlName);
     sprintf(tlName,"Triggers:            %s %s",FileLabel,Cuts);
@@ -608,8 +658,10 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
     TCanvas* temp = new TCanvas();
 
     sprintf(name, "%s_%s_%s.pdf[", FileName,FileLabel,Cuts);
+    if(wHFT) sprintf(name, "%s_%s_%s_wHFT.pdf[", FileName,FileLabel,Cuts);
     temp->Print(name);
     sprintf(name, "%s_%s_%s.pdf", FileName,FileLabel,Cuts);
+    if(wHFT) sprintf(name, "%s_%s_%s_wHFT.pdf", FileName,FileLabel,Cuts);
     temp = fp; // print front page
     temp->Print(name);
     for(int q=0; q<numCanvas; q++)
@@ -641,6 +693,7 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
       }
     }
     sprintf(name, "%s_%s_%s.pdf]", FileName,FileLabel,Cuts);
+    if(wHFT) sprintf(name, "%s_%s_%s_wHFT.pdf]", FileName,FileLabel,Cuts);
     temp->Print(name);
   }
 
