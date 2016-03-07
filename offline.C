@@ -33,12 +33,12 @@ Bool_t makePDF,makeROOT;
 int isLogY = 1;
 Bool_t drawAll = kFALSE;
 Bool_t withMergedPion = kFALSE;
-Bool_t DEBUG = kFALSE;
+Bool_t DEBUG = kTRUE;
 Bool_t wHFT = kFALSE;
 void offline(const char* FileName="test", Int_t trig=4, const char* Cuts="BEMC",Bool_t ishft=kFALSE) //0=MB,1=HT1,2=HT2,3=HT3,4=ALL, BEMC, SMD, TOF
 {
   wHFT = ishft;
-  const char* cutTypes[4] = {"BEMC","TOF","SMD","SMD2"};
+  const char* cutTypes[3] = {"BEMC","SMD","SMD2"};
   if(wHFT) cout << "---Running with HFT Match Requirement!---" << endl;
   if(trig == 4)
   {
@@ -48,7 +48,7 @@ void offline(const char* FileName="test", Int_t trig=4, const char* Cuts="BEMC",
 
     if(!strncmp(Cuts,"ALL",3))
     {
-      for(int q=0;q<4;q++)
+      for(int q=0;q<3;q++)
       {
         for(Int_t i=0;i<trig;i++)
           makeHist(FileName,i,cutTypes[q]);
@@ -70,7 +70,7 @@ void offline(const char* FileName="test", Int_t trig=4, const char* Cuts="BEMC",
     if(DEBUG) cout << "Make Root: " << makeROOT << endl;
     if(!strncmp(Cuts,"ALL",3))
     {
-      for(int q=0;q<4;q++)
+      for(int q=0;q<3;q++)
       {
         makeHist(FileName,trig,cutTypes[q]);
       }
@@ -196,6 +196,9 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
   TH2F* nSigmaKPt   = (TH2F*)f->Get(Form("nSigmaK_Pt_%s_%i",Cuts,trig));
   TH2F* nSigmaPPt   = (TH2F*)f->Get(Form("nSigmaP_Pt_%s_%i",Cuts,trig));
   TH2F* nSigmaEPt   = (TH2F*)f->Get(Form("nSigmaE_Pt_%s_%i",Cuts,trig));
+
+  TH3F* nSigmaEPtEta = (TH3F*)f->Get(Form("nSigmaE_Pt_Eta_%s_%i",Cuts,trig));
+
   if(wHFT)
   {
     nSigmaPiPt  = (TH2F*)f->Get(Form("nSigmaPI_Pt_%s_HFT_%i",Cuts,trig));
@@ -207,7 +210,7 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
   TH2F* nSigmaEKPt  = (TH2F*)f->Get(Form("nSigmaE_KEnh_Pt_%i",trig));
   TH2F* nSigmaEPPt  = (TH2F*)f->Get(Form("nSigmaE_PEnh_Pt_%i",trig));
   TH2F* nSigmaEPiPt = (TH2F*)f->Get(Form("nSigmaE_PiEnh_Pt_%i",trig));
-  if(DEBUG)cout << "got hists" << endl;
+  if(DEBUG)cout << "got hists trig "<< trig << endl;
 
 
   TH1D* projnSigmaPi[numPtBins];
@@ -219,6 +222,7 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
   TH1D* projnSigmaEP[numPtBins];
   TH1D* projnSigmaEPi[numPtBins];
   TH1D* projinvBeta[numPtBins];
+  TH1D* projnSigmaEEta[numPtBins];
   TF1 *fitPi[numPtBins];
   TF1 *fitKP[numPtBins];
   TF1 *fitmPi[numPtBins];
@@ -249,6 +253,9 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
     projnSigmaEK[ptbin]  = nSigmaEKPt->ProjectionY(Form("projnSigmaEK_%i",ptbin),nSigmaEKPt->GetXaxis()->FindBin(lowpt[ptbin]),nSigmaEKPt->GetXaxis()->FindBin(highpt[ptbin])-1);
     projnSigmaEP[ptbin]  = nSigmaEPPt->ProjectionY(Form("projnSigmaEP_%i",ptbin),nSigmaEPPt->GetXaxis()->FindBin(lowpt[ptbin]),nSigmaEPPt->GetXaxis()->FindBin(highpt[ptbin])-1);
     projnSigmaEPi[ptbin]  = nSigmaEPiPt->ProjectionY(Form("projnSigmaEPi_%i",ptbin),nSigmaEPiPt->GetXaxis()->FindBin(lowpt[ptbin]),nSigmaEPiPt->GetXaxis()->FindBin(highpt[ptbin])-1);
+
+     projnSigmaEEta[ptbin]  = nSigmaEPtEta->ProjectionY(Form("projnSigmaEEta_%i",ptbin),nSigmaEPtEta->GetXaxis()->FindBin(lowpt[ptbin]),nSigmaEPtEta->GetXaxis()->FindBin(highpt[ptbin])-1,nSigmaEPtEta->GetZaxis()->FindBin(-1.),nSigmaEPtEta->GetZaxis()->FindBin(1)-1);
+
   }
 
   // Analyze the projections
