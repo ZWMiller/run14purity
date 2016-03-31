@@ -355,7 +355,6 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
         fitCom[etaBin][ptbin]->SetParLimits(11,0,1.5);
 
       projnSigmaE[etaBin][ptbin]->Fit(fitCom[etaBin][ptbin],"VR");
-      projnSigmaE[etaBin][ptbin]->Fit("gaus");
       projnSigmaE[etaBin][ptbin]->UseCurrentStyle();
       fitCom[etaBin][ptbin]->GetParameters(&par[0]);
       fitCom[etaBin][ptbin]->GetParameters(&parStorage[0]);
