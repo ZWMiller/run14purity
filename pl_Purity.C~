@@ -23,7 +23,7 @@ int pl_Purity(){
 
 
   // Load all trigger type files
-  const char* baseName = "outputs/Mar1_PuritySample";
+  const char* baseName = "outputs/purityHists_Mar29";
   char BEMCName[4][100],SMDLName[4][100],SMDTName[4][100],BEMCHFTName[4][100],SMDLHFTName[4][100],SMDTHFTName[4][100];
   char trigName[4][100] = {"MB","BHT1","BHT2","BHT3"};
   TFile* BEMC[4];
@@ -189,8 +189,8 @@ int pl_Purity(){
 
     dNdpTOL->cd(t+1);
     dNdpTBEMC[t]->Draw("Ape");
-    dNdpTSMDL[t]->Draw("same pe");
-    dNdpTSMDT[t]->Draw("same pe");
+    if(t!=0)dNdpTSMDL[t]->Draw("same pe");
+    if(t!=0)dNdpTSMDT[t]->Draw("same pe");
     leg->Draw("same");
   }
 

@@ -470,6 +470,7 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
     fitmPiD[ptbin]= new TF1(Form("drawmPi_%i",ptbin),"gaus",-10,10);
     fitKPD[ptbin] = new TF1(Form("drawKP_%i",ptbin),"gaus",-10,10);
     fitED[ptbin] = new TF1(Form("drawE_%i",ptbin),"gaus",-10,10);
+
     Double_t parPi[3],parKP[3],parE[3],parmPi[3];
     for(Int_t i=0; i<12; i++)
     {

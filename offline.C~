@@ -192,15 +192,36 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
 
   // Make Projections (first get 2d/3d hists, then project)
 
-  THnSparse* nSigmaESparse = (THnSparse*)f->Get(Form("nSigmaE_%s_%i",Cuts,trig));
-  TH3D* nSigmaEPtEta = nSigmaESparse->Projection(0,1,2);
+  TH2F* nSigmaPiPt  = (TH2F*)f->Get(Form("nSigmaPI_Pt_%s_%i",Cuts,trig));
+  TH2F* nSigmaKPt   = (TH2F*)f->Get(Form("nSigmaK_Pt_%s_%i",Cuts,trig));
+  TH2F* nSigmaPPt   = (TH2F*)f->Get(Form("nSigmaP_Pt_%s_%i",Cuts,trig));
+  TH2F* nSigmaEPt   = (TH2F*)f->Get(Form("nSigmaE_Pt_%s_%i",Cuts,trig));
+
+  TH3F* nSigmaEPtEta = (TH3F*)f->Get(Form("nSigmaE_Pt_Eta_%s_%i",Cuts,trig));
+
   if(wHFT)
   {
-    nSigmaEPtEta = (TH3F*)f->Get(Form("nSigmaE_%s_HFT_%i",Cuts,trig));
+    nSigmaPiPt  = (TH2F*)f->Get(Form("nSigmaPI_Pt_%s_HFT_%i",Cuts,trig));
+    nSigmaKPt   = (TH2F*)f->Get(Form("nSigmaK_Pt_%s_HFT_%i",Cuts,trig));
+    nSigmaPPt   = (TH2F*)f->Get(Form("nSigmaP_Pt_%s_HFT_%i",Cuts,trig));
+    nSigmaEPt   = (TH2F*)f->Get(Form("nSigmaE_Pt_%s_HFT_%i",Cuts,trig));
   }
+  TH2F* invBetaPt   = (TH2F*)f->Get(Form("invsBeta_Pt_%i",trig));
+  TH2F* nSigmaEKPt  = (TH2F*)f->Get(Form("nSigmaE_KEnh_Pt_%i",trig));
+  TH2F* nSigmaEPPt  = (TH2F*)f->Get(Form("nSigmaE_PEnh_Pt_%i",trig));
+  TH2F* nSigmaEPiPt = (TH2F*)f->Get(Form("nSigmaE_PiEnh_Pt_%i",trig));
   if(DEBUG)cout << "got hists trig "<< trig << endl;
 
 
+  TH1D* projnSigmaPi[numPtBins];
+  TH1D* projnSigmaK[numPtBins];
+  TH1D* projnSigmaP[numPtBins];
+  TH1D* projnSigmaE[numPtBins];
+  TH1D* drawnSigmaE[numPtBins];
+  TH1D* projnSigmaEK[numPtBins];
+  TH1D* projnSigmaEP[numPtBins];
+  TH1D* projnSigmaEPi[numPtBins];
+  TH1D* projinvBeta[numPtBins];
   TH1D* projnSigmaEEta[numPtBins];
   TF1 *fitPi[numPtBins];
   TF1 *fitKP[numPtBins];
@@ -221,9 +242,18 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
   double dx[numPtBins],dy[numPtBins];
   double parStorage[12] = {0.};
   double parErrStorage[12] = {0.};
-
   for(Int_t ptbin=0; ptbin<numPtBins; ptbin++)
   {
+    projnSigmaPi[ptbin] = nSigmaPiPt->ProjectionY(Form("projnSigmaPi_%i",ptbin),nSigmaPiPt->GetXaxis()->FindBin(lowpt[ptbin]),nSigmaPiPt->GetXaxis()->FindBin(highpt[ptbin])-1);
+    projnSigmaK[ptbin]  = nSigmaKPt->ProjectionY(Form("projnSigmaK_%i",ptbin),nSigmaKPt->GetXaxis()->FindBin(lowpt[ptbin]),nSigmaKPt->GetXaxis()->FindBin(highpt[ptbin])-1);
+    projnSigmaP[ptbin]  = nSigmaPPt->ProjectionY(Form("projnSigmaP_%i",ptbin),nSigmaPPt->GetXaxis()->FindBin(lowpt[ptbin]),nSigmaPPt->GetXaxis()->FindBin(highpt[ptbin])-1);
+    projnSigmaE[ptbin]  = nSigmaEPt->ProjectionY(Form("projnSigmaE_%i",ptbin),nSigmaEPt->GetXaxis()->FindBin(lowpt[ptbin]),nSigmaEPt->GetXaxis()->FindBin(highpt[ptbin])-1);
+    projinvBeta[ptbin]  = invBetaPt->ProjectionY(Form("invBeta_%i",ptbin),invBetaPt->GetXaxis()->FindBin(lowpt[ptbin]),invBetaPt->GetXaxis()->FindBin(highpt[ptbin])-1);
+
+    projnSigmaEK[ptbin]  = nSigmaEKPt->ProjectionY(Form("projnSigmaEK_%i",ptbin),nSigmaEKPt->GetXaxis()->FindBin(lowpt[ptbin]),nSigmaEKPt->GetXaxis()->FindBin(highpt[ptbin])-1);
+    projnSigmaEP[ptbin]  = nSigmaEPPt->ProjectionY(Form("projnSigmaEP_%i",ptbin),nSigmaEPPt->GetXaxis()->FindBin(lowpt[ptbin]),nSigmaEPPt->GetXaxis()->FindBin(highpt[ptbin])-1);
+    projnSigmaEPi[ptbin]  = nSigmaEPiPt->ProjectionY(Form("projnSigmaEPi_%i",ptbin),nSigmaEPiPt->GetXaxis()->FindBin(lowpt[ptbin]),nSigmaEPiPt->GetXaxis()->FindBin(highpt[ptbin])-1);
+
      projnSigmaEEta[ptbin]  = nSigmaEPtEta->ProjectionY(Form("projnSigmaEEta_%i",ptbin),nSigmaEPtEta->GetXaxis()->FindBin(lowpt[ptbin]),nSigmaEPtEta->GetXaxis()->FindBin(highpt[ptbin])-1,nSigmaEPtEta->GetZaxis()->FindBin(-1.),nSigmaEPtEta->GetZaxis()->FindBin(1)-1);
 
   }
