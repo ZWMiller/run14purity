@@ -237,7 +237,7 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
   double piInte[numPtBins];
   double mpiInte[numPtBins];
   double kpInte[numPtBins];
-  double sum[numPtBins], purity[numPtBins],pT[numPtBins],dNdpT[numPtBins];
+  double sum[numPtBins], purity[numPtBins],pT[numPtBins],dNdpT[numPtBins],aYield[numPtBins];
   double parPlot[12][numPtBins], errPlot[12][numPtBins];
   double dx[numPtBins],dy[numPtBins];
   double parStorage[12] = {0.};
@@ -470,6 +470,7 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
     fitmPiD[ptbin]= new TF1(Form("drawmPi_%i",ptbin),"gaus",-10,10);
     fitKPD[ptbin] = new TF1(Form("drawKP_%i",ptbin),"gaus",-10,10);
     fitED[ptbin] = new TF1(Form("drawE_%i",ptbin),"gaus",-10,10);
+
     Double_t parPi[3],parKP[3],parE[3],parmPi[3];
     for(Int_t i=0; i<12; i++)
     {
@@ -518,6 +519,7 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
     sum[ptbin] = eInte[ptbin]+piInte[ptbin]+mpiInte[ptbin]+kpInte[ptbin];
     dNdpT[ptbin] = sum[ptbin]/(highpt[ptbin]-lowpt[ptbin]);
     purity[ptbin] = eInte[ptbin]/sum[ptbin];
+    aYield[ptbin] = dNdpT[ptbin]*purity[ptbin];
     pT[ptbin] = (lowpt[ptbin]+highpt[ptbin])/2.;
     dx[ptbin] = (highpt[ptbin]-lowpt[ptbin])/2.;
     if(eInte[ptbin] <= 10)
@@ -552,6 +554,9 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
 
   // make graphs that need all pt bins
   TGraphErrors* purGr = new TGraphErrors(numPtBins,pT,purity,dx,dy);
+  TGraphErrors* adjYieldGr = new TGraphErrors(numPtBins,pT,aYield,dx,dy);
+  adjYieldGr->SetName("adjYieldGr");
+  adjYieldGr->Write();
   TGraphErrors* dNdpTGr = new TGraphErrors(numPtBins,pT,dNdpT,dx,dy);
   TGraphErrors* drawPur;
   TGraphErrors* drawdNdpT;

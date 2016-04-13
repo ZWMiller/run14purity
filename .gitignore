@@ -1,2 +1,6 @@
 *.C~
 *.swp
+*.swo
+*.so
+*.d
+*.pcm

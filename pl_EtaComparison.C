@@ -86,6 +86,9 @@ int pl_EtaComparison(){
   TH1F* dNdpT2BEMC[4][numEtaBins];
   TH1F* dNdpT2SMDL[4][numEtaBins];
   TH1F* dNdpT2SMDT[4][numEtaBins];
+  TH1F* adjYieldBEMC[4][numEtaBins];
+  TH1F* adjYieldSMDL[4][numEtaBins];
+  TH1F* adjYieldSMDT[4][numEtaBins];
   TH1F* nSigBEMCh[4][numEtaBins][numPtBins];
   TH1F* nSigSMDLh[4][numEtaBins][numPtBins];
   TH1F* nSigSMDTh[4][numEtaBins][numPtBins];
@@ -123,6 +126,10 @@ int pl_EtaComparison(){
       dNdpT2BEMC[w][etabin] = (TH1F*)BEMC[w]->Get(Form("drawdNdpT_%i",etabin));
       dNdpT2SMDL[w][etabin] = (TH1F*)SMDL[w]->Get(Form("drawdNdpT_%i",etabin));
       dNdpT2SMDT[w][etabin] = (TH1F*)SMDT[w]->Get(Form("drawdNdpT_%i",etabin));
+      adjYieldBEMC[w][etabin] = (TH1F*)BEMC[w]->Get(Form("adjYield_%i",etabin));
+      adjYieldSMDL[w][etabin] = (TH1F*)SMDL[w]->Get(Form("adjYield_%i",etabin));
+      adjYieldSMDT[w][etabin] = (TH1F*)SMDT[w]->Get(Form("adjYield_%i",etabin));
+
      /* PurityBEMCh[w][etabin] = (TH1F*)BEMCh[w]->Get(Form("drawPurity_%i",etabin));
       PuritySMDLh[w][etabin] = (TH1F*)SMDLh[w]->Get(Form("drawPurity_%i",etabin));
       PuritySMDTh[w][etabin] = (TH1F*)SMDTh[w]->Get(Form("drawPurity_%i",etabin));*/
@@ -135,6 +142,7 @@ int pl_EtaComparison(){
   // Make Canvas
   TCanvas* purityOL[4];
   TCanvas* purityTrigOL[4][numEtaBins];
+  TCanvas* purityTrigOL2[4][numEtaBins];
   for(int etabin=0; etabin<numEtaBins; etabin++)
   {
     for(int ptbin=0; ptbin<numPtBins; ptbin++)
@@ -165,6 +173,7 @@ int pl_EtaComparison(){
       if(DEBUG) cout << "plot settings eta: " << etabin << endl;
 
       purityTrigOL[r][etabin]= new TCanvas(Form("purityTrigOL_%i_%i",r,etabin),"Purity Overlays",50,50,1050,1050);
+      purityTrigOL2[r][etabin]= new TCanvas(Form("purityTrigOL2_%i_%i",r,etabin),"Purity Overlays",50,50,1050,1050);
       purityTrigOL[r][etabin]->Divide(1,2);
 
       PurityBEMC[r][etabin]->SetLineColor(1+etabin);
@@ -203,6 +212,17 @@ int pl_EtaComparison(){
       dNdpT2SMDL[r][etabin]->SetMarkerStyle(21);
       dNdpT2SMDT[r][etabin]->SetMarkerStyle(22);
       dNdpT2BEMC[r][etabin]->SetTitle(Form("%s dN/dpT Trigger Compare",trigName[r]));
+
+      adjYieldBEMC[r][etabin]->SetLineColor(kBlack);
+      adjYieldSMDL[r][etabin]->SetLineColor(kRed);
+      adjYieldSMDT[r][etabin]->SetLineColor(kBlue);
+      adjYieldBEMC[r][etabin]->SetMarkerColor(kBlack);
+      adjYieldSMDL[r][etabin]->SetMarkerColor(kRed);
+      adjYieldSMDT[r][etabin]->SetMarkerColor(kBlue);
+      adjYieldBEMC[r][etabin]->SetMarkerStyle(20);
+      adjYieldSMDL[r][etabin]->SetMarkerStyle(21);
+      adjYieldSMDT[r][etabin]->SetMarkerStyle(22);
+      adjYieldBEMC[r][etabin]->SetTitle(Form("%s Adjusted dN/dpT Trigger Compare",trigName[r]));
     }
   }
 
@@ -261,6 +281,14 @@ int pl_EtaComparison(){
       dNdpT2BEMC[t][etabin]->Draw("Ape");
       dNdpT2SMDL[t][etabin]->Draw("same pe");
       dNdpT2SMDT[t][etabin]->Draw("same pe");
+      leg3->Draw("same");
+      lblE[etabin]->Draw("same");
+
+      purityTrigOL2[t][etabin]->cd();
+      gPad->SetLogy(1);
+      adjYieldBEMC[t][etabin]->Draw("Ape");
+      adjYieldSMDL[t][etabin]->Draw("same pe");
+      adjYieldSMDT[t][etabin]->Draw("same pe");
       leg3->Draw("same");
       lblE[etabin]->Draw("same");
     }
@@ -323,6 +351,8 @@ int pl_EtaComparison(){
     {  
       if(DEBUG) cout << "Place Canvas in PDF eta: " << e << endl;
       temp = purityTrigOL[q][e]; // print data canvases
+      temp->Print(name);
+      temp = purityTrigOL2[q][e]; // print data canvases
       temp->Print(name);
     }
   }
