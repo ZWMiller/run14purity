@@ -257,6 +257,7 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
 
   nSigmaESparse->CalculateErrors();
   TH3D* nSigmaEPtEta;
+  nSigmaESparse->GetAxis(3)->SetRange(0, 15); // Only select 0-80% Centrality (centrality16)
   nSigmaEPtEta = nSigmaESparse->Projection(0,1,2);
   if(DEBUG)cout << "got hists trig "<< trig << endl;
 
@@ -408,11 +409,11 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
       for(int ii=0; ii<12; ii++)
       {
         if(ii == 0 || ii == 3 || ii == 6 || ii == 9)
-          parGaus[ii] = new TH1F(Form("parGaus_%i",ii),Form("Par %i Results for All Fits",ii),16000,-8000,8000);
+          parGaus[ii] = new TH1F(Form("parGaus_%i",ii),Form("Par %i Results for All Fits",ii),1600,-8000,8000);
         else if(ii == 1 || ii == 4 || ii == 7 || ii == 10)
-          parGaus[ii] = new TH1F(Form("parGaus_%i",ii),Form("Par %i Results for All Fits",ii),10000,-10,10);
+          parGaus[ii] = new TH1F(Form("parGaus_%i",ii),Form("Par %i Results for All Fits",ii),1000,-10,10);
         else if(ii == 2 || ii == 5 || ii == 8 || ii == 11)
-          parGaus[ii] = new TH1F(Form("parGaus_%i",ii),Form("Par %i Results for All Fits",ii),10000,0,2);
+          parGaus[ii] = new TH1F(Form("parGaus_%i",ii),Form("Par %i Results for All Fits",ii),1000,0,2);
       }  
       TRandom3 *gRnd= new TRandom3(0);
       TH1D* HH;
