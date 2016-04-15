@@ -44,6 +44,7 @@
 #include <iostream>
 #include "TString.h"
 #include "TPaveText.h"
+#include "TPaveStats.h"
 #include "TF1.h"
 #include "TStyle.h"
 #include "TRandom3.h"
@@ -211,7 +212,8 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
   double kpInte[numEtaBins][numPtBins];
   double sum[numEtaBins][numPtBins], purity[numEtaBins][numPtBins],
          pT[numEtaBins][numPtBins], dNdpT[numEtaBins][numPtBins],
-         XnDOF[numEtaBins][numPtBins], aYield[numEtaBins][numPtBins];
+         XnDOF[numEtaBins][numPtBins], aYield[numEtaBins][numPtBins],
+         aPur[numEtaBins][numPtBins];
   double parPlot[12][numEtaBins][numPtBins], 
          errPlot[12][numEtaBins][numPtBins];
   double dx[numEtaBins][numPtBins],dy[numEtaBins][numPtBins],dy2[numEtaBins][numPtBins];
@@ -417,7 +419,7 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
       }  
       TRandom3 *gRnd= new TRandom3(0);
       TH1D* HH;
-      for(int it=0; it<200; it++)
+      for(int it=0; it<1000; it++)
       {
         HH = (TH1D*)projnSigmaE[etaBin][ptbin]->Clone();
         int bins = HH->GetNbinsX();
@@ -485,7 +487,7 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
       TF1* parFind = new TF1("parFind","gaus");
       if(DEBUG) cout << "Before Par Fits" << endl;
 
-      int aPad = ptbin-12;
+      int aPad = ptbin-9;
       purityGaussians[etaBin]->cd(aPad);
       gPad->SetLogy(isLogY);
       purGaus->Draw();
@@ -505,6 +507,7 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
       chi2Find->GetParameters(&tempPar[0]);
       XnDOF[etaBin][ptbin] = tempPar[1]; //mean
       aYield[etaBin][ptbin] = purity[etaBin][ptbin]* dNdpT[etaBin][ptbin];
+      aPur[etaBin][ptbin] = 2.*purity[etaBin][ptbin] - 1.;
 
       if(DEBUG) cout << "Mid Par fits" << endl;
       parameterGaussians[etaBin]->Divide(4,3);
@@ -593,7 +596,7 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
       // XnDOF[etaBin][ptbin] = chiNDF;
 
       // Make Stats box legible
-   /*   nSigE[etaBin][activeCanvas]->cd(activeBin+1);
+      nSigE[etaBin][activeCanvas]->cd(activeBin+1);
       TPaveStats *s = (TPaveStats*) gPad->GetPrimitive("stats");
       s->SetX1NDC(0.65);
       s->SetX2NDC(0.95);
@@ -602,7 +605,7 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
       nSigE[etaBin][activeCanvas]->Modified();
 
       nSigE[etaBin][activeCanvas]->Update();
-      if(DEBUG) cout << "Stats Modified" << endl;*/
+      if(DEBUG) cout << "Stats Modified" << endl;
     }
   }
 
@@ -610,6 +613,7 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
   TGraphErrors* purGr[numEtaBins];
   TGraphErrors* dNdpTGr[numEtaBins];
   TGraphErrors* adjYield[numEtaBins];
+  TGraphErrors* adjPurity[numEtaBins];
   TGraphErrors* drawPur[numEtaBins];
   TGraphErrors* drawdNdpT[numEtaBins];
   TGraphErrors* chi2dof[numEtaBins];
@@ -626,6 +630,7 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
 
     purGr[etaBin] = new TGraphErrors(numPtBins,pT[etaBin],purity[etaBin],dx[etaBin],dy[etaBin]);
     adjYield[etaBin] = new TGraphErrors(numPtBins,pT[etaBin],aYield[etaBin],dx[etaBin],dy2[etaBin]);
+    adjPurity[etaBin] = new TGraphErrors(numPtBins,pT[etaBin],aPur[etaBin],dx[etaBin],dy[etaBin]);
     dNdpTGr[etaBin] = new TGraphErrors(numPtBins,pT[etaBin],dNdpT[etaBin],dx[etaBin],dy2[etaBin]);
     chi2dof[etaBin] = new TGraphErrors(numPtBins,pT[etaBin],XnDOF[etaBin],dx[etaBin],dy[etaBin]);
     if(DEBUG) cout << "TGraphErrors Assigned" << endl;
@@ -689,6 +694,18 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
     adjYield[etaBin]->SetName(Form("adjYield_%i",etaBin));
     adjYield[etaBin]->Write();
 
+    adjPurity[etaBin]->SetMarkerStyle(20);
+    adjPurity[etaBin]->SetMarkerSize(0.7);
+    adjPurity[etaBin]->SetTitle("Electron Sample");
+    adjPurity[etaBin]->GetXaxis()->SetTitle("p_{T} (GeV/c)");
+    adjPurity[etaBin]->GetYaxis()->SetTitle("2*Purity - 1");
+    adjPurity[etaBin]->SetMarkerColor(kRed);
+    adjPurity[etaBin]->SetLineColor(kRed);
+    adjPurity[etaBin]->Draw("AP");
+    adjPurity[etaBin]->GetXaxis()->SetRangeUser(anaConst::trigThreshold[trig],20);
+    adjPurity[etaBin]->Draw("AP");
+    adjPurity[etaBin]->SetName(Form("adjPurity_%i",etaBin));
+    adjPurity[etaBin]->Write();
 
     gPad->SetLogy(isLogY);
     dNdpTGr[etaBin]->SetMarkerStyle(20);
