@@ -227,26 +227,26 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
   TCanvas* parameterFitCanvas[numEtaBins];
   TCanvas* junk = new TCanvas("junk","junk",50,50,1050,1050);
 
-  for(Int_t etaBin=0; etaBin < numEtaBins; etaBin++){
+  for(Int_t etabin=0; etabin < numEtaBins; etabin++){
 
-    purC[etaBin] = new TCanvas(Form("purC_%i",etaBin),"Electron Purity",50,50,1050,1050);
-    parameterFitCanvas[etaBin] = new TCanvas(Form("parFitCanvas_%i",etaBin),"Fit Params vs pT",50,50,1050,1050);
+    purC[etabin] = new TCanvas(Form("purC_%i",etabin),"Electron Purity",50,50,1050,1050);
+    parameterFitCanvas[etabin] = new TCanvas(Form("parFitCanvas_%i",etabin),"Fit Params vs pT",50,50,1050,1050);
 
     if(withMergedPion)
-      parameterFitCanvas[etaBin]->Divide(4,3);
+      parameterFitCanvas[etabin]->Divide(4,3);
     else
-      parameterFitCanvas[etaBin]->Divide(3,3);
-    purC[etaBin]->Divide(1,2);
-    xSquare[etaBin] = new TCanvas(Form("xSquare_%i",etaBin),"Chi Square Check",50,50,1050,1050);
-    purityGaussians[etaBin] = new TCanvas(Form("purityGaussians_%i",etaBin),"Electron Purity Gaussians",50,50,1050,1050);
-    purityGaussians[etaBin]->Divide(4,3);
-    parameterGaussians[etaBin] = new TCanvas(Form("parameterGaussians_%i",etaBin),"Electron parameter Gaussians",50,50,1050,1050);
-    parameterGaussians[etaBin]->Divide(4,3);
+      parameterFitCanvas[etabin]->Divide(3,3);
+    purC[etabin]->Divide(1,2);
+    xSquare[etabin] = new TCanvas(Form("xSquare_%i",etabin),"Chi Square Check",50,50,1050,1050);
+    purityGaussians[etabin] = new TCanvas(Form("purityGaussians_%i",etabin),"Electron Purity Gaussians",50,50,1050,1050);
+    purityGaussians[etabin]->Divide(4,3);
+    parameterGaussians[etabin] = new TCanvas(Form("parameterGaussians_%i",etabin),"Electron parameter Gaussians",50,50,1050,1050);
+    parameterGaussians[etabin]->Divide(4,3);
 
     for(Int_t q = 0; q < numCanvas; q++)
     {
-      nSigE[etaBin][q] = new TCanvas(Form("nSigE_%i_%i",etaBin,q),"nSigma Electron Projections",50,50,1050,1050);
-      nSigE[etaBin][q] -> Divide(3,3);
+      nSigE[etabin][q] = new TCanvas(Form("nSigE_%i_%i",etabin,q),"nSigma Electron Projections",50,50,1050,1050);
+      nSigE[etabin][q] -> Divide(3,3);
     }
   }
 
@@ -266,61 +266,61 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
   double parStorage[12] = {0.};
   double parHold[12] = {0.};
   double parErrStorage[12] = {0.};
-  for(Int_t etaBin=0; etaBin<numEtaBins; etaBin++)
+  for(Int_t etabin=0; etabin<numEtaBins; etabin++)
   {
     for(Int_t ptbin=0; ptbin<numPtBins; ptbin++)
     {
-      projnSigmaE[etaBin][ptbin]  = (TH1D*)nSigmaEPtEta->ProjectionY(Form("projnSigmaE_%i_%i",etaBin,ptbin),nSigmaEPtEta->GetXaxis()->FindBin(lowpt[ptbin]),nSigmaEPtEta->GetXaxis()->FindBin(highpt[ptbin])-1,nSigmaEPtEta->GetZaxis()->FindBin(loweta[etaBin]),nSigmaEPtEta->GetZaxis()->FindBin(higheta[etaBin])-1);
+      projnSigmaE[etabin][ptbin]  = (TH1D*)nSigmaEPtEta->ProjectionY(Form("projnSigmaE_%i_%i",etabin,ptbin),nSigmaEPtEta->GetXaxis()->FindBin(lowpt[ptbin]),nSigmaEPtEta->GetXaxis()->FindBin(highpt[ptbin])-1,nSigmaEPtEta->GetZaxis()->FindBin(loweta[etabin]),nSigmaEPtEta->GetZaxis()->FindBin(higheta[etabin])-1);
     }
   }
 
   // Analyze the projections
-  for(Int_t etaBin= 0; etaBin < numEtaBins; etaBin++)
+  for(Int_t etabin= 0; etabin < numEtaBins; etabin++)
   {
     parStorage[0] = 0; // reset fitting algorithm for each eta bin
-    if(DEBUG) cout << endl << "EtaBin: " << etaBin << endl;
+    if(DEBUG) cout << endl << "EtaBin: " << etabin << endl;
 
     for(Int_t ptbin = 0; ptbin < numPtBins; ptbin++){
       // Clear the variables of interest
-      purity[etaBin][ptbin] = dNdpT[etaBin][ptbin] = dx[etaBin][ptbin] = dy[etaBin][ptbin] = 0;
+      purity[etabin][ptbin] = dNdpT[etabin][ptbin] = dx[etabin][ptbin] = dy[etabin][ptbin] = 0;
       for(int ii=0; ii<12; ii++)
       {
-        parPlot[ii][etaBin][ptbin] = errPlot[ii][etaBin][ptbin] = 0;
+        parPlot[ii][etabin][ptbin] = errPlot[ii][etabin][ptbin] = 0;
       }
 
       // Don't analyze below the trigger turn on curve
       if(lowpt[ptbin] < anaConst::trigThreshold[trig]) continue; 
 
       // Init necessary plotting tools
-      lbl[etaBin][ptbin] = new TPaveText(.67,.25,.85,.3,Form("NB NDC%i",ptbin));
-      sprintf(textLabel,"%.2f < #eta < %.2f",loweta[etaBin],higheta[etaBin]);
-      lbl[etaBin][ptbin]->AddText(textLabel);
+      lbl[etabin][ptbin] = new TPaveText(.67,.25,.85,.3,Form("NB NDC%i",ptbin));
+      sprintf(textLabel,"%.2f < #eta < %.2f",loweta[etabin],higheta[etabin]);
+      lbl[etabin][ptbin]->AddText(textLabel);
       sprintf(textLabel,"%.2f < P_{T,e} < %.2f",lowpt[ptbin],highpt[ptbin]);
-      lbl[etaBin][ptbin]->AddText(textLabel);
-      lbl[etaBin][ptbin]->SetFillColor(kWhite);
+      lbl[etabin][ptbin]->AddText(textLabel);
+      lbl[etabin][ptbin]->SetFillColor(kWhite);
 
       int activeCanvas = (int)ptbin/9;
       int activeBin = ptbin - activeCanvas*9;
       if(DEBUG)cout << ptbin << ": " << activeCanvas << " " << activeBin << endl;
 
-      nSigE[etaBin][activeCanvas]->cd(activeBin+1);
+      nSigE[etabin][activeCanvas]->cd(activeBin+1);
       gPad->SetLogy(isLogY);
-      projnSigmaE[etaBin][ptbin]->SetMarkerColor(kBlack);
-      projnSigmaE[etaBin][ptbin]->SetMarkerStyle(20);
-      projnSigmaE[etaBin][ptbin]->SetLineColor(kBlack);
-      projnSigmaE[etaBin][ptbin]->SetMarkerSize(0.5);
-      projnSigmaE[etaBin][ptbin]->GetXaxis()->SetRangeUser(-11.,16.);
-      projnSigmaE[etaBin][ptbin]->GetXaxis()->SetRangeUser(-10.,10.);
-      projnSigmaE[etaBin][ptbin]->SetTitle("");
-      drawnSigmaE[etaBin][ptbin] = (TH1D*)projnSigmaE[etaBin][ptbin]->Clone();
-      drawnSigmaE[etaBin][ptbin]->SetName(Form("drawnSigmaE_%i_%i",etaBin,ptbin));
-      drawnSigmaE[etaBin][ptbin]->Write();
-      projnSigmaE[etaBin][ptbin]->Draw();
-      lbl[etaBin][ptbin]->Draw("same");
+      projnSigmaE[etabin][ptbin]->SetMarkerColor(kBlack);
+      projnSigmaE[etabin][ptbin]->SetMarkerStyle(20);
+      projnSigmaE[etabin][ptbin]->SetLineColor(kBlack);
+      projnSigmaE[etabin][ptbin]->SetMarkerSize(0.5);
+      projnSigmaE[etabin][ptbin]->GetXaxis()->SetRangeUser(-11.,16.);
+      projnSigmaE[etabin][ptbin]->GetXaxis()->SetRangeUser(-10.,10.);
+      projnSigmaE[etabin][ptbin]->SetTitle("");
+      drawnSigmaE[etabin][ptbin] = (TH1D*)projnSigmaE[etabin][ptbin]->Clone();
+      drawnSigmaE[etabin][ptbin]->SetName(Form("drawnSigmaE_%i_%i",etabin,ptbin));
+      drawnSigmaE[etabin][ptbin]->Write();
+      projnSigmaE[etabin][ptbin]->Draw();
+      lbl[etabin][ptbin]->Draw("same");
       if(DEBUG) cout << "After Clone projnSigmaE" << endl;
 
       // Do fits on nSig E
-      //      nSigE[etaBin][activeCanvas]->cd(activeBin+1);
+      //      nSigE[etabin][activeCanvas]->cd(activeBin+1);
       gStyle->SetOptFit(1111);
       Double_t par[12];
       Double_t parErr[12];
@@ -330,78 +330,78 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
       piLow = -4. ; piHigh = -2.;
       eLow = -1.0  ; eHigh = 2.0;
       mpiLow = 3.5; mpiHigh = 6;
-      fitKP[etaBin][ptbin] = new TF1(Form("fitKP_%i_%i",etaBin,ptbin),"gaus",kpLow,kpHigh);
-      fitPi[etaBin][ptbin] = new TF1(Form("fitPi_%i_%i",etaBin,ptbin),"gaus",piLow,piHigh);
-      fitE[etaBin][ptbin]  = new TF1(Form("fitE_%i_%i",etaBin,ptbin),"gaus",eLow,eHigh);
-      fitmPi[etaBin][ptbin]= new TF1(Form("fitmPi_%i_%i",etaBin,ptbin),"gaus",mpiLow,mpiHigh);
+      fitKP[etabin][ptbin] = new TF1(Form("fitKP_%i_%i",etabin,ptbin),"gaus",kpLow,kpHigh);
+      fitPi[etabin][ptbin] = new TF1(Form("fitPi_%i_%i",etabin,ptbin),"gaus",piLow,piHigh);
+      fitE[etabin][ptbin]  = new TF1(Form("fitE_%i_%i",etabin,ptbin),"gaus",eLow,eHigh);
+      fitmPi[etabin][ptbin]= new TF1(Form("fitmPi_%i_%i",etabin,ptbin),"gaus",mpiLow,mpiHigh);
       if(withMergedPion)
-        fitCom[etaBin][ptbin]= new TF1(Form("fitCom_%i_%i",etaBin,ptbin),"gaus(0)+gaus(3)+gaus(6)+gaus(9)",-10,10);
+        fitCom[etabin][ptbin]= new TF1(Form("fitCom_%i_%i",etabin,ptbin),"gaus(0)+gaus(3)+gaus(6)+gaus(9)",-10,10);
       else
-        fitCom[etaBin][ptbin]= new TF1(Form("fitCom_%i_%i",etaBin,ptbin),"gaus(0)+gaus(3)+gaus(6)",-10,10);
+        fitCom[etabin][ptbin]= new TF1(Form("fitCom_%i_%i",etabin,ptbin),"gaus(0)+gaus(3)+gaus(6)",-10,10);
 
-      fitCom[etaBin][ptbin]->SetParName(0,"#pi C");
-      fitCom[etaBin][ptbin]->SetParName(1,"#pi #mu");
-      fitCom[etaBin][ptbin]->SetParName(2,"#pi #sigma");
-      fitCom[etaBin][ptbin]->SetParName(3,"Kp C");
-      fitCom[etaBin][ptbin]->SetParName(4,"Kp #mu");
-      fitCom[etaBin][ptbin]->SetParName(5,"Kp #sigma");
-      fitCom[etaBin][ptbin]->SetParName(6,"e C");
-      fitCom[etaBin][ptbin]->SetParName(7,"e #mu");
-      fitCom[etaBin][ptbin]->SetParName(8,"e #sigma");
-      fitCom[etaBin][ptbin]->SetParName(9, "mer#pi C");
-      fitCom[etaBin][ptbin]->SetParName(10,"mer#pi #mu");
-      fitCom[etaBin][ptbin]->SetParName(11,"mer#pi #sigma");
+      fitCom[etabin][ptbin]->SetParName(0,"#pi C");
+      fitCom[etabin][ptbin]->SetParName(1,"#pi #mu");
+      fitCom[etabin][ptbin]->SetParName(2,"#pi #sigma");
+      fitCom[etabin][ptbin]->SetParName(3,"Kp C");
+      fitCom[etabin][ptbin]->SetParName(4,"Kp #mu");
+      fitCom[etabin][ptbin]->SetParName(5,"Kp #sigma");
+      fitCom[etabin][ptbin]->SetParName(6,"e C");
+      fitCom[etabin][ptbin]->SetParName(7,"e #mu");
+      fitCom[etabin][ptbin]->SetParName(8,"e #sigma");
+      fitCom[etabin][ptbin]->SetParName(9, "mer#pi C");
+      fitCom[etabin][ptbin]->SetParName(10,"mer#pi #mu");
+      fitCom[etabin][ptbin]->SetParName(11,"mer#pi #sigma");
 
-      fitPi[etaBin][ptbin]->SetLineColor(kRed);
-      fitKP[etaBin][ptbin]->SetLineColor(kCyan);
-      fitE[etaBin][ptbin]->SetLineColor(kBlue);
-      fitmPi[etaBin][ptbin]->SetLineColor(kGreen);
-      fitCom[etaBin][ptbin]->SetLineColor(kMagenta);
-      fitPi[etaBin][ptbin]->SetLineWidth(1);
-      fitmPi[etaBin][ptbin]->SetLineWidth(1);
-      fitKP[etaBin][ptbin]->SetLineWidth(1);
-      fitE[etaBin][ptbin]->SetLineWidth(1);
-      fitCom[etaBin][ptbin]->SetLineWidth(2);
+      fitPi[etabin][ptbin]->SetLineColor(kRed);
+      fitKP[etabin][ptbin]->SetLineColor(kCyan);
+      fitE[etabin][ptbin]->SetLineColor(kBlue);
+      fitmPi[etabin][ptbin]->SetLineColor(kGreen);
+      fitCom[etabin][ptbin]->SetLineColor(kMagenta);
+      fitPi[etabin][ptbin]->SetLineWidth(1);
+      fitmPi[etabin][ptbin]->SetLineWidth(1);
+      fitKP[etabin][ptbin]->SetLineWidth(1);
+      fitE[etabin][ptbin]->SetLineWidth(1);
+      fitCom[etabin][ptbin]->SetLineWidth(2);
 
       // make versions to draw fits in full
-      fitPiD[etaBin][ptbin] = new TF1(Form("drawPi_%i_%i",etaBin,ptbin),"gaus",-10,10);
-      fitmPiD[etaBin][ptbin]= new TF1(Form("drawmPi_%i_%i",etaBin,ptbin),"gaus",-10,10);
-      fitKPD[etaBin][ptbin] = new TF1(Form("drawKP_%i_%i",etaBin,ptbin),"gaus",-10,10);
-      fitED[etaBin][ptbin]  = new TF1(Form("drawE_%i_%i",etaBin,ptbin),"gaus",-10,10);
+      fitPiD[etabin][ptbin] = new TF1(Form("drawPi_%i_%i",etabin,ptbin),"gaus",-10,10);
+      fitmPiD[etabin][ptbin]= new TF1(Form("drawmPi_%i_%i",etabin,ptbin),"gaus",-10,10);
+      fitKPD[etabin][ptbin] = new TF1(Form("drawKP_%i_%i",etabin,ptbin),"gaus",-10,10);
+      fitED[etabin][ptbin]  = new TF1(Form("drawE_%i_%i",etabin,ptbin),"gaus",-10,10);
 
       // If this is the first bin of the trigger, fit the roughly
       // expected areas for each Gaussian to get starting pars for total fit
       if(parStorage[0] == 0.)
       {
-        projnSigmaE[etaBin][ptbin]->Fit(fitPi[etaBin][ptbin],"RQ");
-        projnSigmaE[etaBin][ptbin]->Fit(fitKP[etaBin][ptbin],"RQ");
-        projnSigmaE[etaBin][ptbin]->Fit(fitE[etaBin][ptbin],"RQ");
+        projnSigmaE[etabin][ptbin]->Fit(fitPi[etabin][ptbin],"RQ");
+        projnSigmaE[etabin][ptbin]->Fit(fitKP[etabin][ptbin],"RQ");
+        projnSigmaE[etabin][ptbin]->Fit(fitE[etabin][ptbin],"RQ");
         if(withMergedPion)
-          projnSigmaE[etaBin][ptbin]->Fit(fitmPi[etaBin][ptbin],"RQ");
+          projnSigmaE[etabin][ptbin]->Fit(fitmPi[etabin][ptbin],"RQ");
 
-        fitPi[etaBin][ptbin]->GetParameters(&par[0]);
-        fitKP[etaBin][ptbin]->GetParameters(&par[3]);
-        fitE[etaBin][ptbin]->GetParameters(&par[6]);
+        fitPi[etabin][ptbin]->GetParameters(&par[0]);
+        fitKP[etabin][ptbin]->GetParameters(&par[3]);
+        fitE[etabin][ptbin]->GetParameters(&par[6]);
         if(withMergedPion)
-          fitmPi[etaBin][ptbin]->GetParameters(&par[9]);
-        fitCom[etaBin][ptbin]->SetParameters(par);
+          fitmPi[etabin][ptbin]->GetParameters(&par[9]);
+        fitCom[etabin][ptbin]->SetParameters(par);
       }
       else // Otherwise, use results from last fit as input
-        fitCom[etaBin][ptbin]->SetParameters(parStorage);
-      fitCom[etaBin][ptbin]->GetParameters(&parHold[0]);
+        fitCom[etabin][ptbin]->SetParameters(parStorage);
+      fitCom[etabin][ptbin]->GetParameters(&parHold[0]);
       // Apply parameter constraints
-      //  fitCom[etaBin][ptbin]->SetParLimits(0,0,1000000);
-      fitCom[etaBin][ptbin]->SetParLimits(1,-6,-4);
-      fitCom[etaBin][ptbin]->SetParLimits(2,0.8,1.2);
-      //  fitCom[etaBin][ptbin]->SetParLimits(3,0,1000000);
-      fitCom[etaBin][ptbin]->SetParLimits(4,-5,-2);
-      fitCom[etaBin][ptbin]->SetParLimits(5,0.8,1.2);
-      //  fitCom[etaBin][ptbin]->SetParLimits(6,0,1000000);
-      fitCom[etaBin][ptbin]->SetParLimits(7,-0.5,0.0);
-      fitCom[etaBin][ptbin]->SetParLimits(8,0.8,1.2);
-      //  fitCom[etaBin][ptbin]->SetParLimits(9,0,1000000);
-      //  fitCom[etaBin][ptbin]->SetParLimits(10,2,4);
-      //  fitCom[etaBin][ptbin]->SetParLimits(11,0.8,1.5);
+      //  fitCom[etabin][ptbin]->SetParLimits(0,0,1000000);
+      fitCom[etabin][ptbin]->SetParLimits(1,-6,-4);
+      fitCom[etabin][ptbin]->SetParLimits(2,0.8,1.2);
+      //  fitCom[etabin][ptbin]->SetParLimits(3,0,1000000);
+      fitCom[etabin][ptbin]->SetParLimits(4,-5,-2);
+      fitCom[etabin][ptbin]->SetParLimits(5,0.8,1.2);
+      //  fitCom[etabin][ptbin]->SetParLimits(6,0,1000000);
+      fitCom[etabin][ptbin]->SetParLimits(7,-0.5,0.0);
+      fitCom[etabin][ptbin]->SetParLimits(8,0.8,1.2);
+      //  fitCom[etabin][ptbin]->SetParLimits(9,0,1000000);
+      //  fitCom[etabin][ptbin]->SetParLimits(10,2,4);
+      //  fitCom[etabin][ptbin]->SetParLimits(11,0.8,1.5);
 
       // Do fits 1000 times on slightly randomized data to get mean and error of purity
       TH1F* purGaus = new TH1F("purGaus","Purity Results for All Fits",1000,0,2);
@@ -421,21 +421,21 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
       TH1D* HH;
       for(int it=0; it<1000; it++)
       {
-        HH = (TH1D*)projnSigmaE[etaBin][ptbin]->Clone();
+        HH = (TH1D*)projnSigmaE[etabin][ptbin]->Clone();
         int bins = HH->GetNbinsX();
         for(int b=0; b<bins; b++)
         {
-          if(projnSigmaE[etaBin][ptbin]->GetBinContent(b) && projnSigmaE[etaBin][ptbin]->GetBinError(b))
+          if(projnSigmaE[etabin][ptbin]->GetBinContent(b) && projnSigmaE[etabin][ptbin]->GetBinError(b))
           {
             HH->SetBinContent(b,gRnd->Gaus(HH->GetBinContent(b),HH->GetBinError(b)));
           }
         }
-        HH->Fit(fitCom[etaBin][ptbin],"RQ");
+        HH->Fit(fitCom[etabin][ptbin],"RQ");
         //HH->UseCurrentStyle();
-        fitCom[etaBin][ptbin]->GetParameters(&par[0]);
-        fitCom[etaBin][ptbin]->GetParameters(&parStorage[0]);
-        float chi2 = fitCom[etaBin][ptbin]->GetChisquare();
-        int ndf = fitCom[etaBin][ptbin]->GetNDF();
+        fitCom[etabin][ptbin]->GetParameters(&par[0]);
+        fitCom[etabin][ptbin]->GetParameters(&parStorage[0]);
+        float chi2 = fitCom[etabin][ptbin]->GetChisquare();
+        int ndf = fitCom[etabin][ptbin]->GetNDF();
         float chiNDF = chi2/(float)ndf;
 
         for(int ii=0; ii<12; ii++)
@@ -457,17 +457,17 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
             parmPi[i-9] = par[i];
         }
 
-        fitPiD[etaBin][ptbin]->SetParameters(parPi);
-        fitmPiD[etaBin][ptbin]->SetParameters(parmPi);
-        fitKPD[etaBin][ptbin]->SetParameters(parKP);
-        fitED[etaBin][ptbin]->SetParameters(parE);
+        fitPiD[etabin][ptbin]->SetParameters(parPi);
+        fitmPiD[etabin][ptbin]->SetParameters(parmPi);
+        fitKPD[etabin][ptbin]->SetParameters(parKP);
+        fitED[etabin][ptbin]->SetParameters(parE);
         if(DEBUG) cout << "Parameters Set" << endl;
 
         // Integrate the fits 
-        float eInt = fitED[etaBin][ptbin]->Integral(-1,3);
-        float piInt = fitPiD[etaBin][ptbin]->Integral(-1,3);
-        float mpiInt = fitmPiD[etaBin][ptbin]->Integral(-1,3);
-        float kpInt = fitKPD[etaBin][ptbin]->Integral(-1,3);
+        float eInt = fitED[etabin][ptbin]->Integral(-1,3);
+        float piInt = fitPiD[etabin][ptbin]->Integral(-1,3);
+        float mpiInt = fitmPiD[etabin][ptbin]->Integral(-1,3);
+        float kpInt = fitKPD[etabin][ptbin]->Integral(-1,3);
         float purNum = eInt;
         if(!withMergedPion)
           mpiInt = 0;
@@ -488,38 +488,38 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
       if(DEBUG) cout << "Before Par Fits" << endl;
 
       int aPad = ptbin-9;
-      purityGaussians[etaBin]->cd(aPad);
+      purityGaussians[etabin]->cd(aPad);
       gPad->SetLogy(isLogY);
       purGaus->Draw();
       purityFind->SetLineColor(kRed);
       purGaus->Fit(purityFind,"Q");
-      lbl[etaBin][ptbin]->Draw("same");
+      lbl[etabin][ptbin]->Draw("same");
       purityFind->GetParameters(&tempPar[0]);
-      purity[etaBin][ptbin] = tempPar[1]; // mean
-      dy[etaBin][ptbin] = tempPar[2];    // sigma
+      purity[etabin][ptbin] = tempPar[1]; // mean
+      dy[etabin][ptbin] = tempPar[2];    // sigma
       
       junk->cd();
       dNdpTGaus->Fit(dndptFind,"Q0");
       dndptFind->GetParameters(&tempPar[0]);
-      dNdpT[etaBin][ptbin] = tempPar[1]; //mean
-      dy2[etaBin][ptbin] = tempPar[2];    // sigma
+      dNdpT[etabin][ptbin] = tempPar[1]; //mean
+      dy2[etabin][ptbin] = tempPar[2];    // sigma
       chiGaus->Fit(chi2Find,"Q0");
       chi2Find->GetParameters(&tempPar[0]);
-      XnDOF[etaBin][ptbin] = tempPar[1]; //mean
-      aYield[etaBin][ptbin] = purity[etaBin][ptbin]* dNdpT[etaBin][ptbin];
-      aPur[etaBin][ptbin] = 2.*purity[etaBin][ptbin] - 1.;
+      XnDOF[etabin][ptbin] = tempPar[1]; //mean
+      aYield[etabin][ptbin] = purity[etabin][ptbin]* dNdpT[etabin][ptbin];
+      aPur[etabin][ptbin] = (2.*purity[etabin][ptbin] - 1.)*dNdpT[etabin][ptbin];
 
       if(DEBUG) cout << "Mid Par fits" << endl;
-      parameterGaussians[etaBin]->Divide(4,3);
+      parameterGaussians[etabin]->Divide(4,3);
       for(int ii=0; ii<12; ii++)
       {
        // if(ptbin != 3) continue;
-        parameterGaussians[etaBin]->cd(ii+1);
+        parameterGaussians[etabin]->cd(ii+1);
         parGaus[ii] -> Fit(parFind,"Q0");
         parGaus[ii]->Draw();
         parFind->GetParameters(&tempPar[0]);
-        parPlot[ii][etaBin][ptbin] = tempPar[1]; //store the mean
-        errPlot[ii][etaBin][ptbin] = tempPar[2];
+        parPlot[ii][etabin][ptbin] = tempPar[1]; //store the mean
+        errPlot[ii][etabin][ptbin] = tempPar[2];
         if(DEBUG)  
           cout << "par " << ii << ": " << tempPar[1] << endl;
         par[ii] = tempPar[1];
@@ -528,13 +528,13 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
       if(DEBUG) cout << "After Par fits" << endl;
 
       // bypass the parameter selction from multi fit version
-      fitCom[etaBin][ptbin]->SetParameters(parHold);
-      projnSigmaE[etaBin][ptbin]->Fit(fitCom[etaBin][ptbin],"Q0");
-      fitCom[etaBin][ptbin]->GetParameters(&par[0]);
-      float chi2 = fitCom[etaBin][ptbin]->GetChisquare();
-      int ndf = fitCom[etaBin][ptbin]->GetNDF();
+      fitCom[etabin][ptbin]->SetParameters(parHold);
+      projnSigmaE[etabin][ptbin]->Fit(fitCom[etabin][ptbin],"Q0");
+      fitCom[etabin][ptbin]->GetParameters(&par[0]);
+      float chi2 = fitCom[etabin][ptbin]->GetChisquare();
+      int ndf = fitCom[etabin][ptbin]->GetNDF();
       float chiNDF = chi2/(float)ndf;
-      XnDOF[etaBin][ptbin] = chiNDF;
+      XnDOF[etabin][ptbin] = chiNDF;
 
       Double_t parPi[3],parKP[3],parE[3],parmPi[3];
       for(Int_t i=0; i<12; i++)
@@ -550,61 +550,61 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
       }
       if(DEBUG) cout << "Assign par vals" << endl;
 
-      nSigE[etaBin][activeCanvas] -> cd(activeBin+1);
-      fitCom[etaBin][ptbin]  -> SetParameters(par);
-      fitPiD[etaBin][ptbin]  -> SetParameters(parPi);
-      fitmPiD[etaBin][ptbin] -> SetParameters(parmPi);
-      fitKPD[etaBin][ptbin]  -> SetParameters(parKP);
-      fitED[etaBin][ptbin]   -> SetParameters(parE);
-      fitPiD[etaBin][ptbin]  -> SetLineStyle(1);
-      fitPiD[etaBin][ptbin]  -> SetLineWidth(1);
-      fitPiD[etaBin][ptbin]  -> SetLineColor(kRed);
-      fitmPiD[etaBin][ptbin] -> SetLineStyle(1);
-      fitmPiD[etaBin][ptbin] -> SetLineWidth(1);
-      fitmPiD[etaBin][ptbin] -> SetLineColor(kGreen+3);
-      fitKPD[etaBin][ptbin]  -> SetLineStyle(1);
-      fitKPD[etaBin][ptbin]  -> SetLineWidth(1);
-      fitKPD[etaBin][ptbin]  -> SetLineColor(kCyan);
-      fitED[etaBin][ptbin]   -> SetLineStyle(1);
-      fitED[etaBin][ptbin]   -> SetLineWidth(1);
-      fitED[etaBin][ptbin]   -> SetLineColor(kBlue);
-      projnSigmaE[etaBin][ptbin]->Draw();
+      nSigE[etabin][activeCanvas] -> cd(activeBin+1);
+      fitCom[etabin][ptbin]  -> SetParameters(par);
+      fitPiD[etabin][ptbin]  -> SetParameters(parPi);
+      fitmPiD[etabin][ptbin] -> SetParameters(parmPi);
+      fitKPD[etabin][ptbin]  -> SetParameters(parKP);
+      fitED[etabin][ptbin]   -> SetParameters(parE);
+      fitPiD[etabin][ptbin]  -> SetLineStyle(1);
+      fitPiD[etabin][ptbin]  -> SetLineWidth(1);
+      fitPiD[etabin][ptbin]  -> SetLineColor(kRed);
+      fitmPiD[etabin][ptbin] -> SetLineStyle(1);
+      fitmPiD[etabin][ptbin] -> SetLineWidth(1);
+      fitmPiD[etabin][ptbin] -> SetLineColor(kGreen+3);
+      fitKPD[etabin][ptbin]  -> SetLineStyle(1);
+      fitKPD[etabin][ptbin]  -> SetLineWidth(1);
+      fitKPD[etabin][ptbin]  -> SetLineColor(kCyan);
+      fitED[etabin][ptbin]   -> SetLineStyle(1);
+      fitED[etabin][ptbin]   -> SetLineWidth(1);
+      fitED[etabin][ptbin]   -> SetLineColor(kBlue);
+      projnSigmaE[etabin][ptbin]->Draw();
       //HH->Draw();
-      fitCom[etaBin][ptbin]  -> Draw("same");
-      fitPiD[etaBin][ptbin]  -> Draw("same");
-      if(withMergedPion)     fitmPiD[etaBin][ptbin]->Draw("same");
-      fitKPD[etaBin][ptbin]  -> Draw("same");
-      fitED[etaBin][ptbin]   -> Draw("same");
-      lbl[etaBin][ptbin]     -> Draw("same");
+      fitCom[etabin][ptbin]  -> Draw("same");
+      fitPiD[etabin][ptbin]  -> Draw("same");
+      if(withMergedPion)     fitmPiD[etabin][ptbin]->Draw("same");
+      fitKPD[etabin][ptbin]  -> Draw("same");
+      fitED[etabin][ptbin]   -> Draw("same");
+      lbl[etabin][ptbin]     -> Draw("same");
       if(DEBUG) cout << "Finish Draw" << endl; 
 
       // Prepare for TGraphErrors
       // Integrate the fits 
-      /* eInte[etaBin][ptbin] = fitED[etaBin][ptbin]->Integral(-1,3);
-         piInte[etaBin][ptbin] = fitPiD[etaBin][ptbin]->Integral(-1,3);
-         mpiInte[etaBin][ptbin] = fitmPiD[etaBin][ptbin]->Integral(-1,3);
-         kpInte[etaBin][ptbin] = fitKPD[etaBin][ptbin]->Integral(-1,3);
+      /* eInte[etabin][ptbin] = fitED[etabin][ptbin]->Integral(-1,3);
+         piInte[etabin][ptbin] = fitPiD[etabin][ptbin]->Integral(-1,3);
+         mpiInte[etabin][ptbin] = fitmPiD[etabin][ptbin]->Integral(-1,3);
+         kpInte[etabin][ptbin] = fitKPD[etabin][ptbin]->Integral(-1,3);
          if(DEBUG) cout << "After Integrate" << endl; 
 
          if(!withMergedPion)
-         mpiInte[etaBin][ptbin] = 0;
-         sum[etaBin][ptbin] = eInte[etaBin][ptbin]+piInte[etaBin][ptbin]+mpiInte[etaBin][ptbin]+kpInte[etaBin][ptbin];
-         dNdpT[etaBin][ptbin] = sum[etaBin][ptbin]/(highpt[ptbin]-lowpt[ptbin]);
-         purity[etaBin][ptbin] = eInte[etaBin][ptbin]/sum[etaBin][ptbin];*/
-      pT[etaBin][ptbin] = (lowpt[ptbin]+highpt[ptbin])/2.;
-      dx[etaBin][ptbin] = (highpt[ptbin]-lowpt[ptbin])/2.;
-      // XnDOF[etaBin][ptbin] = chiNDF;
+         mpiInte[etabin][ptbin] = 0;
+         sum[etabin][ptbin] = eInte[etabin][ptbin]+piInte[etabin][ptbin]+mpiInte[etabin][ptbin]+kpInte[etabin][ptbin];
+         dNdpT[etabin][ptbin] = sum[etabin][ptbin]/(highpt[ptbin]-lowpt[ptbin]);
+         purity[etabin][ptbin] = eInte[etabin][ptbin]/sum[etabin][ptbin];*/
+      pT[etabin][ptbin] = (lowpt[ptbin]+highpt[ptbin])/2.;
+      dx[etabin][ptbin] = (highpt[ptbin]-lowpt[ptbin])/2.;
+      // XnDOF[etabin][ptbin] = chiNDF;
 
       // Make Stats box legible
-      nSigE[etaBin][activeCanvas]->cd(activeBin+1);
+      nSigE[etabin][activeCanvas]->cd(activeBin+1);
       TPaveStats *s = (TPaveStats*) gPad->GetPrimitive("stats");
       s->SetX1NDC(0.65);
       s->SetX2NDC(0.95);
       s->SetY1NDC(0.45);
       s->SetY2NDC(0.95);
-      nSigE[etaBin][activeCanvas]->Modified();
+      nSigE[etabin][activeCanvas]->Modified();
 
-      nSigE[etaBin][activeCanvas]->Update();
+      nSigE[etabin][activeCanvas]->Update();
       if(DEBUG) cout << "Stats Modified" << endl;
     }
   }
@@ -624,54 +624,54 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
 
 
 
-  for(Int_t etaBin=0; etaBin < numEtaBins; etaBin++)
+  for(Int_t etabin=0; etabin < numEtaBins; etabin++)
   {
-    if(DEBUG) cout << "TGraphErrors etaBin: " << etaBin << endl;
+    if(DEBUG) cout << "TGraphErrors etabin: " << etabin << endl;
 
-    purGr[etaBin] = new TGraphErrors(numPtBins,pT[etaBin],purity[etaBin],dx[etaBin],dy[etaBin]);
-    adjYield[etaBin] = new TGraphErrors(numPtBins,pT[etaBin],aYield[etaBin],dx[etaBin],dy2[etaBin]);
-    adjPurity[etaBin] = new TGraphErrors(numPtBins,pT[etaBin],aPur[etaBin],dx[etaBin],dy[etaBin]);
-    dNdpTGr[etaBin] = new TGraphErrors(numPtBins,pT[etaBin],dNdpT[etaBin],dx[etaBin],dy2[etaBin]);
-    chi2dof[etaBin] = new TGraphErrors(numPtBins,pT[etaBin],XnDOF[etaBin],dx[etaBin],dy[etaBin]);
+    purGr[etabin] = new TGraphErrors(numPtBins,pT[etabin],purity[etabin],dx[etabin],dy[etabin]);
+    adjYield[etabin] = new TGraphErrors(numPtBins,pT[etabin],aYield[etabin],dx[etabin],dy2[etabin]);
+    adjPurity[etabin] = new TGraphErrors(numPtBins,pT[etabin],aPur[etabin],dx[etabin],dy[etabin]);
+    dNdpTGr[etabin] = new TGraphErrors(numPtBins,pT[etabin],dNdpT[etabin],dx[etabin],dy2[etabin]);
+    chi2dof[etabin] = new TGraphErrors(numPtBins,pT[etabin],XnDOF[etabin],dx[etabin],dy[etabin]);
     if(DEBUG) cout << "TGraphErrors Assigned" << endl;
 
     int numParams = 12; if(!withMergedPion) numParams = 9;
     for(int ii=0; ii<numParams; ii++)
     {
-      parameterFitCanvas[etaBin] -> cd(ii+1);
-      fitPars[ii][etaBin] =  new TGraphErrors(numPtBins,pT[etaBin],parPlot[ii][etaBin],dx[etaBin],errPlot[ii][etaBin]);
-      fitPars[ii][etaBin] -> SetMarkerStyle(20);
-      fitPars[ii][etaBin] -> SetMarkerSize(0.7);
-      fitPars[ii][etaBin] -> SetTitle(parNames[ii]);
-      fitPars[ii][etaBin] -> GetXaxis()->SetTitle("p_{T} (GeV/c)");
-      fitPars[ii][etaBin] -> GetYaxis()->SetTitle("Par. Value");
-      fitPars[ii][etaBin] -> SetMarkerColor(kRed);
-      fitPars[ii][etaBin] -> SetLineColor(kRed);
-      fitPars[ii][etaBin] -> Draw("AP");
-      fitPars[ii][etaBin] -> GetXaxis()->SetRangeUser(anaConst::trigThreshold[trig],20.);
-      fitPars[ii][etaBin] -> Draw("AP");
-      fitPars[ii][etaBin] -> SetName(Form("fitpar_%i_%i",etaBin,ii));//Set object name for write to .root
-      fitPars[ii][etaBin] -> Write(); // write to .root
+      parameterFitCanvas[etabin] -> cd(ii+1);
+      fitPars[ii][etabin] =  new TGraphErrors(numPtBins,pT[etabin],parPlot[ii][etabin],dx[etabin],errPlot[ii][etabin]);
+      fitPars[ii][etabin] -> SetMarkerStyle(20);
+      fitPars[ii][etabin] -> SetMarkerSize(0.7);
+      fitPars[ii][etabin] -> SetTitle(parNames[ii]);
+      fitPars[ii][etabin] -> GetXaxis()->SetTitle("p_{T} (GeV/c)");
+      fitPars[ii][etabin] -> GetYaxis()->SetTitle("Par. Value");
+      fitPars[ii][etabin] -> SetMarkerColor(kRed);
+      fitPars[ii][etabin] -> SetLineColor(kRed);
+      fitPars[ii][etabin] -> Draw("AP");
+      fitPars[ii][etabin] -> GetXaxis()->SetRangeUser(anaConst::trigThreshold[trig],20.);
+      fitPars[ii][etabin] -> Draw("AP");
+      fitPars[ii][etabin] -> SetName(Form("fitpar_%i_%i",etabin,ii));//Set object name for write to .root
+      fitPars[ii][etabin] -> Write(); // write to .root
     }
     if(DEBUG) cout << "FitPars Hists Created" << endl;
 
-    purC[etaBin]->cd(1);
-    purGr[etaBin]->SetMarkerStyle(20);
-    purGr[etaBin]->SetMarkerSize(0.7);
-    purGr[etaBin]->SetTitle("Electron Sample Purity");
-    purGr[etaBin]->GetXaxis()->SetTitle("p_{T} (GeV/c)");
-    purGr[etaBin]->GetYaxis()->SetTitle("Purity");
-    purGr[etaBin]->GetYaxis()->SetRangeUser(0.0,1.2);
-    purGr[etaBin]->SetMarkerColor(kRed);
-    purGr[etaBin]->SetLineColor(kRed);
-    purGr[etaBin]->Draw("AP");
-    purGr[etaBin]->GetXaxis()->SetRangeUser(anaConst::trigThreshold[trig],20.);
-    purGr[etaBin]->Draw("AP");
-    purGr[etaBin]->SetName("purity");//Set object name for write to .root
-    purGr[etaBin]->Write(); // write to .root
-    drawPur[etaBin] = (TGraphErrors*)purGr[etaBin]->Clone();
-    drawPur[etaBin]->SetName(Form("drawPurity_%i",etaBin));
-    drawPur[etaBin]->Write();
+    purC[etabin]->cd(1);
+    purGr[etabin]->SetMarkerStyle(20);
+    purGr[etabin]->SetMarkerSize(0.7);
+    purGr[etabin]->SetTitle("Electron Sample Purity");
+    purGr[etabin]->GetXaxis()->SetTitle("p_{T} (GeV/c)");
+    purGr[etabin]->GetYaxis()->SetTitle("Purity");
+    purGr[etabin]->GetYaxis()->SetRangeUser(0.0,1.2);
+    purGr[etabin]->SetMarkerColor(kRed);
+    purGr[etabin]->SetLineColor(kRed);
+    purGr[etabin]->Draw("AP");
+    purGr[etabin]->GetXaxis()->SetRangeUser(anaConst::trigThreshold[trig],20.);
+    purGr[etabin]->Draw("AP");
+    purGr[etabin]->SetName("purity");//Set object name for write to .root
+    purGr[etabin]->Write(); // write to .root
+    drawPur[etabin] = (TGraphErrors*)purGr[etabin]->Clone();
+    drawPur[etabin]->SetName(Form("drawPurity_%i",etabin));
+    drawPur[etabin]->Write();
     if(DEBUG) cout << "Purity Graph Done" << endl;
 
     // Fit Purity
@@ -679,69 +679,69 @@ void makeHist(const char* FileName="test", Int_t trig=4,const char* Cut="BEMC")
     //TF1* purFit = new TF1("PurityFit","pol2",lowpt[0],8.);//highpt[numPtBins-1]);
     //purGr->Fit(purFit,"RQ");
 
-    purC[etaBin]->cd(2);
+    purC[etabin]->cd(2);
  // Handle drawing for option set before actually draw dn/dpt
-    adjYield[etaBin]->SetMarkerStyle(20);
-    adjYield[etaBin]->SetMarkerSize(0.7);
-    adjYield[etaBin]->SetTitle("Electron Sample");
-    adjYield[etaBin]->GetXaxis()->SetTitle("p_{T} (GeV/c)");
-    adjYield[etaBin]->GetYaxis()->SetTitle("Purity*dN/dpT");
-    adjYield[etaBin]->SetMarkerColor(kRed);
-    adjYield[etaBin]->SetLineColor(kRed);
-    adjYield[etaBin]->Draw("AP");
-    adjYield[etaBin]->GetXaxis()->SetRangeUser(anaConst::trigThreshold[trig],20);
-    adjYield[etaBin]->Draw("AP");
-    adjYield[etaBin]->SetName(Form("adjYield_%i",etaBin));
-    adjYield[etaBin]->Write();
+    adjYield[etabin]->SetMarkerStyle(20);
+    adjYield[etabin]->SetMarkerSize(0.7);
+    adjYield[etabin]->SetTitle("Electron Sample");
+    adjYield[etabin]->GetXaxis()->SetTitle("p_{T} (GeV/c)");
+    adjYield[etabin]->GetYaxis()->SetTitle("Purity*dN/dpT");
+    adjYield[etabin]->SetMarkerColor(kRed);
+    adjYield[etabin]->SetLineColor(kRed);
+    adjYield[etabin]->Draw("AP");
+    adjYield[etabin]->GetXaxis()->SetRangeUser(anaConst::trigThreshold[trig],20);
+    adjYield[etabin]->Draw("AP");
+    adjYield[etabin]->SetName(Form("adjYield_%i",etabin));
+    adjYield[etabin]->Write();
 
-    adjPurity[etaBin]->SetMarkerStyle(20);
-    adjPurity[etaBin]->SetMarkerSize(0.7);
-    adjPurity[etaBin]->SetTitle("Electron Sample");
-    adjPurity[etaBin]->GetXaxis()->SetTitle("p_{T} (GeV/c)");
-    adjPurity[etaBin]->GetYaxis()->SetTitle("2*Purity - 1");
-    adjPurity[etaBin]->SetMarkerColor(kRed);
-    adjPurity[etaBin]->SetLineColor(kRed);
-    adjPurity[etaBin]->Draw("AP");
-    adjPurity[etaBin]->GetXaxis()->SetRangeUser(anaConst::trigThreshold[trig],20);
-    adjPurity[etaBin]->Draw("AP");
-    adjPurity[etaBin]->SetName(Form("adjPurity_%i",etaBin));
-    adjPurity[etaBin]->Write();
+    adjPurity[etabin]->SetMarkerStyle(20);
+    adjPurity[etabin]->SetMarkerSize(0.7);
+    adjPurity[etabin]->SetTitle("Electron Sample");
+    adjPurity[etabin]->GetXaxis()->SetTitle("p_{T} (GeV/c)");
+    adjPurity[etabin]->GetYaxis()->SetTitle("(2*Purity - 1)*dN/dpT");
+    adjPurity[etabin]->SetMarkerColor(kRed);
+    adjPurity[etabin]->SetLineColor(kRed);
+    adjPurity[etabin]->Draw("AP");
+    adjPurity[etabin]->GetXaxis()->SetRangeUser(anaConst::trigThreshold[trig],20);
+    adjPurity[etabin]->Draw("AP");
+    adjPurity[etabin]->SetName(Form("adjPurity_%i",etabin));
+    adjPurity[etabin]->Write();
 
     gPad->SetLogy(isLogY);
-    dNdpTGr[etaBin]->SetMarkerStyle(20);
-    dNdpTGr[etaBin]->SetMarkerSize(0.7);
-    dNdpTGr[etaBin]->SetTitle("dN/dpT In Electron Range");
-    dNdpTGr[etaBin]->GetXaxis()->SetTitle("p_{T} (GeV/c)");
-    dNdpTGr[etaBin]->GetYaxis()->SetTitle("dN/dpT");
-    dNdpTGr[etaBin]->SetMarkerColor(kRed);
-    dNdpTGr[etaBin]->SetLineColor(kRed);
-    dNdpTGr[etaBin]->Draw("AP");
-    dNdpTGr[etaBin]->GetXaxis()->SetRangeUser(anaConst::trigThreshold[trig],20.);
-    dNdpTGr[etaBin]->Draw("AP");
-    dNdpTGr[etaBin]->SetName("dNdpT");//Set object name for write to .root
-    dNdpTGr[etaBin]->Write(); // write to .root
-    drawdNdpT[etaBin] = (TGraphErrors*)dNdpTGr[etaBin]->Clone();
-    drawdNdpT[etaBin]->SetName(Form("drawdNdpT_%i",etaBin));
-    drawdNdpT[etaBin]->Write();
+    dNdpTGr[etabin]->SetMarkerStyle(20);
+    dNdpTGr[etabin]->SetMarkerSize(0.7);
+    dNdpTGr[etabin]->SetTitle("dN/dpT In Electron Range");
+    dNdpTGr[etabin]->GetXaxis()->SetTitle("p_{T} (GeV/c)");
+    dNdpTGr[etabin]->GetYaxis()->SetTitle("dN/dpT");
+    dNdpTGr[etabin]->SetMarkerColor(kRed);
+    dNdpTGr[etabin]->SetLineColor(kRed);
+    dNdpTGr[etabin]->Draw("AP");
+    dNdpTGr[etabin]->GetXaxis()->SetRangeUser(anaConst::trigThreshold[trig],20.);
+    dNdpTGr[etabin]->Draw("AP");
+    dNdpTGr[etabin]->SetName("dNdpT");//Set object name for write to .root
+    dNdpTGr[etabin]->Write(); // write to .root
+    drawdNdpT[etabin] = (TGraphErrors*)dNdpTGr[etabin]->Clone();
+    drawdNdpT[etabin]->SetName(Form("drawdNdpT_%i",etabin));
+    drawdNdpT[etabin]->Write();
     if(DEBUG) cout << "dN/dpT Done" << endl;
 
-    xSquare[etaBin]->cd();
-    chi2dof[etaBin]->SetMarkerStyle(20);
-    chi2dof[etaBin]->SetMarkerSize(0.7);
-    chi2dof[etaBin]->SetTitle("Fit Chi2/DoF");
-    chi2dof[etaBin]->GetXaxis()->SetTitle("p_{T} (GeV/c)");
-    chi2dof[etaBin]->GetYaxis()->SetTitle("#Chi^{2}/DOF");
-    chi2dof[etaBin]->SetMarkerColor(kRed);
-    chi2dof[etaBin]->SetLineColor(kRed);
-    chi2dof[etaBin]->Draw("AP");
-    chi2dof[etaBin]->GetXaxis()->SetRangeUser(anaConst::trigThreshold[trig],20.);
-    chi2dof[etaBin]->GetYaxis()->SetRangeUser(0,10);
-    chi2dof[etaBin]->Draw("AP");
-    chi2dof[etaBin]->SetName("purity");//Set object name for write to .root
-    chi2dof[etaBin]->Write(); // write to .root
-    drawX2[etaBin] = (TGraphErrors*)chi2dof[etaBin]->Clone();
-    drawX2[etaBin]->SetName(Form("drawX2_%i",etaBin));
-    drawX2[etaBin]->Write();
+    xSquare[etabin]->cd();
+    chi2dof[etabin]->SetMarkerStyle(20);
+    chi2dof[etabin]->SetMarkerSize(0.7);
+    chi2dof[etabin]->SetTitle("Fit Chi2/DoF");
+    chi2dof[etabin]->GetXaxis()->SetTitle("p_{T} (GeV/c)");
+    chi2dof[etabin]->GetYaxis()->SetTitle("#Chi^{2}/DOF");
+    chi2dof[etabin]->SetMarkerColor(kRed);
+    chi2dof[etabin]->SetLineColor(kRed);
+    chi2dof[etabin]->Draw("AP");
+    chi2dof[etabin]->GetXaxis()->SetRangeUser(anaConst::trigThreshold[trig],20.);
+    chi2dof[etabin]->GetYaxis()->SetRangeUser(0,10);
+    chi2dof[etabin]->Draw("AP");
+    chi2dof[etabin]->SetName("purity");//Set object name for write to .root
+    chi2dof[etabin]->Write(); // write to .root
+    drawX2[etabin] = (TGraphErrors*)chi2dof[etabin]->Clone();
+    drawX2[etabin]->SetName(Form("drawX2_%i",etabin));
+    drawX2[etabin]->Write();
 
   }
 

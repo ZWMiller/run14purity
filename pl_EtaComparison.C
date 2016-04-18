@@ -299,6 +299,10 @@ int pl_EtaComparison(){
   leg4->AddEntry(Purity2BEMC[1][0],"BEMC","lpe");
   leg4->AddEntry(Purity2SMDL[1][0],"SMD","lpe");
   leg4->AddEntry(Purity2SMDT[1][0],"SMD2","lpe");
+  TLegend* leg5 = new TLegend(0.65,0.45,0.80,0.75);
+  leg5->AddEntry(Purity2BEMC[1][0],"BEMC","lpe");
+  leg5->AddEntry(Purity2SMDL[1][0],"SMD","lpe");
+  leg5->AddEntry(Purity2SMDT[1][0],"SMD2","lpe");
   if(DEBUG)
     cout << "Legend Made." << endl;
 
@@ -334,7 +338,7 @@ int pl_EtaComparison(){
       dNdpT2SMDL[t][etabin]->Draw("same pe");
       dNdpT2SMDT[t][etabin]->Draw("same pe");
       leg2->Draw("same");
-      lblE[etabin]->Draw("same");
+      //lblE[etabin]->Draw("same");
       runInfo[etabin]->Draw("same");
 
       purityTrigOL2[t][etabin]->cd(1);
@@ -346,13 +350,14 @@ int pl_EtaComparison(){
       runInfo[etabin]->Draw("same");
 
       purityTrigOL2[t][etabin]->cd(2);
-      gPad->SetLogy(0);
+      gPad->SetLogy(1);
       adjPurityBEMC[t][etabin]->Draw("Ape");
-      adjPurityBEMC[t][etabin]->GetYaxis()->SetRangeUser(0,1.2);
+      adjPurityBEMC[t][etabin]->GetYaxis()->SetRangeUser(1,10000);
+      adjPurityBEMC[t][etabin]->GetXaxis()->SetRangeUser(anaConst::trigThreshold[t],20.); 
       adjPurityBEMC[t][etabin]->Draw("Ape");
       adjPuritySMDL[t][etabin]->Draw("same pe");
       adjPuritySMDT[t][etabin]->Draw("same pe");
-      leg2->Draw("same");
+      leg5->Draw("same");
       runInfo[etabin]->Draw("same");
     }
   }
