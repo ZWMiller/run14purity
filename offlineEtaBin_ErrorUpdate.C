@@ -7,6 +7,9 @@
 //// Updated 3/3/16  to allow for all cut sets in a single call - ZWM
 //// Updated 3/8/16  to produce eta dependent binning in production - ZWM
 //// Updated 3/16/16 to use THnSparse input, project to TH3, then fit - ZWM
+//// Updated 6/14/16 reads in parFits for constraint mode, has w and wo
+////                 constraint modes - ZYe
+//// Updated 6/23/16 produces text files with all the required systematics -ZWM
 //// --------------------
 ////
 //// root -l
@@ -30,6 +33,24 @@
 //// main input files. Search for "NPEPurity" to find the path.
 ////
 //// anaConst14.h contains most of the constants - pT binning, eta Binning, etc
+////
+//// For full use follow these directions
+//// 1. change wConstraint to kFALSE
+//// 2. root -l -b -q 'macros/offlineEtaBin_ErrorUpdate.C++("outputs/purityHists_June9",4,"ALL",kFALSE)'
+//// 3. root -l -b -q macros/pl_FitParams.C // this will generate fitpar_output.root
+//// 4. cd output
+//// 5. mkdir noConstraint
+//// 6. mv *.pdf *.root *.txt noConstraint
+//// 7. mv noConstraint/purity_June9.root .
+//// 8. cd ..
+//// 9. change kFALSE to kTRUE
+//// 10. repeat step 2-5
+//// 12. cd output
+//// 11. mkdir wConstraint
+//// 12. mv *.pdf *.root *.txt wConstraint
+//// 13. mv wConstraint/purity_June9.root .
+//// 14. cd ..
+//// 15. root -l -b -q macros/pl_EtaComparison.C 
 ////
 /////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////
