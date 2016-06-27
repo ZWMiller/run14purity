@@ -1,5 +1,7 @@
 #include "anaConst14.h"
 int readSysFile(TString,float*,float*,float*,float*,float*,float*);
+int getLowCentralityLabel(int);
+int getHighCentralityLabel(int);
 int numActiveBins[4];
 
 int pl_EtaComparison(){
@@ -19,17 +21,23 @@ int pl_EtaComparison(){
   Float_t hptMax=anaConst::hptMax; // Set max above range to allow overflow
   Float_t lowPhi=anaConst::lowPhi, highPhi=anaConst::highPhi;
   const Int_t numEtaBins = anaConst::nEtaBins;
+  const Int_t numCentBins = anaConst::nCentBins;
   Float_t loweta[numEtaBins],higheta[numEtaBins];
+  Float_t lowcent[numCentBins],highcent[numCentBins];
   for(Int_t c=0; c< numEtaBins; c++){
     loweta[c] = anaConst::etaLow[c];
     higheta[c] = anaConst::etaHigh[c];
   }
+  for(Int_t c=0; c< numCentBins; c++){
+    lowcent[c] = anaConst::centLow[c];
+    highcent[c] = anaConst::centHigh[c];
+  }
 
   // create generic structures for use in all plots
-  TPaveText* lbl[numEtaBins][numPtBins];
-  TPaveText* lblE[numEtaBins];
-  TPaveText* runInfo[numEtaBins];
-  TPaveText* runInfo2[numEtaBins];
+  TPaveText* lbl[numCentBins][numEtaBins][numPtBins];
+  TPaveText* lblE[numCentBins][numEtaBins];
+  TPaveText* runInfo[numCentBins][numEtaBins];
+  TPaveText* runInfo2[numCentBins][numEtaBins];
   char textLabel[100]; 
 
 
@@ -76,111 +84,113 @@ int pl_EtaComparison(){
   }
 
   // Access histograms
-  TGraphErrors* nSigBEMC[4][numEtaBins][numPtBins];
-  TGraphErrors* nSigSMDL[4][numEtaBins][numPtBins];
-  TGraphErrors* nSigSMDT[4][numEtaBins][numPtBins];
-  TGraphErrors* PurityBEMC[4][numEtaBins];
-  TGraphErrors* PuritySMDL[4][numEtaBins];
-  TGraphErrors* PuritySMDT[4][numEtaBins];
-  TGraphErrors* dNdpTBEMC[4][numEtaBins];
-  TGraphErrors* dNdpTSMDL[4][numEtaBins];
-  TGraphErrors* dNdpTSMDT[4][numEtaBins];
-  TGraphErrors* Purity2BEMC[4][numEtaBins];
-  TGraphErrors* Purity2SMDL[4][numEtaBins];
-  TGraphErrors* Purity2SMDT[4][numEtaBins];
-  TGraphErrors* dNdpT2BEMC[4][numEtaBins];
-  TGraphErrors* dNdpT2SMDL[4][numEtaBins];
-  TGraphErrors* dNdpT2SMDT[4][numEtaBins];
-  TGraphErrors* nSigBEMCh[4][numEtaBins][numPtBins];
-  TGraphErrors* nSigSMDLh[4][numEtaBins][numPtBins];
-  TGraphErrors* nSigSMDTh[4][numEtaBins][numPtBins];
-  TGraphErrors* PurityBEMCh[4][numEtaBins];
-  TGraphErrors* PuritySMDLh[4][numEtaBins];
-  TGraphErrors* PuritySMDTh[4][numEtaBins];
-  TGraphErrors* dNdpTBEMCh[4][numEtaBins];
-  TGraphErrors* dNdpTSMDLh[4][numEtaBins];
-  TGraphErrors* dNdpTSMDTh[4][numEtaBins];
-  TGraphAsymmErrors* purBSys[4][numEtaBins];
-  TGraphAsymmErrors* purSLSys[4][numEtaBins];
-  TGraphAsymmErrors* purSTSys[4][numEtaBins];
+  TGraphErrors* nSigBEMC[4][numCentBins][numEtaBins][numPtBins];
+  TGraphErrors* nSigSMDL[4][numCentBins][numEtaBins][numPtBins];
+  TGraphErrors* nSigSMDT[4][numCentBins][numEtaBins][numPtBins];
+  TGraphErrors* PurityBEMC[4][numCentBins][numEtaBins];
+  TGraphErrors* PuritySMDL[4][numCentBins][numEtaBins];
+  TGraphErrors* PuritySMDT[4][numCentBins][numEtaBins];
+  TGraphErrors* dNdpTBEMC[4][numCentBins][numEtaBins];
+  TGraphErrors* dNdpTSMDL[4][numCentBins][numEtaBins];
+  TGraphErrors* dNdpTSMDT[4][numCentBins][numEtaBins];
+  TGraphErrors* Purity2BEMC[4][numCentBins][numEtaBins];
+  TGraphErrors* Purity2SMDL[4][numCentBins][numEtaBins];
+  TGraphErrors* Purity2SMDT[4][numCentBins][numEtaBins];
+  TGraphErrors* dNdpT2BEMC[4][numCentBins][numEtaBins];
+  TGraphErrors* dNdpT2SMDL[4][numCentBins][numEtaBins];
+  TGraphErrors* dNdpT2SMDT[4][numCentBins][numEtaBins];
+  TGraphErrors* nSigBEMCh[4][numCentBins][numEtaBins][numPtBins];
+  TGraphErrors* nSigSMDLh[4][numCentBins][numEtaBins][numPtBins];
+  TGraphErrors* nSigSMDTh[4][numCentBins][numEtaBins][numPtBins];
+  TGraphErrors* PurityBEMCh[4][numCentBins][numEtaBins];
+  TGraphErrors* PuritySMDLh[4][numCentBins][numEtaBins];
+  TGraphErrors* PuritySMDTh[4][numCentBins][numEtaBins];
+  TGraphErrors* dNdpTBEMCh[4][numCentBins][numEtaBins];
+  TGraphErrors* dNdpTSMDLh[4][numCentBins][numEtaBins];
+  TGraphErrors* dNdpTSMDTh[4][numCentBins][numEtaBins];
+  TGraphAsymmErrors* purBSys[4][numCentBins][numEtaBins];
+  TGraphAsymmErrors* purSLSys[4][numCentBins][numEtaBins];
+  TGraphAsymmErrors* purSTSys[4][numCentBins][numEtaBins];
 
-  float pT[numEtaBins][numPtBins], pTErr[numEtaBins][numPtBins];
-  float purFitB[numEtaBins][numPtBins],purFitSL[numEtaBins][numPtBins], purFitST[numEtaBins][numPtBins];
-  float purFitBn[numEtaBins][numPtBins],purFitSLn[numEtaBins][numPtBins], purFitSTn[numEtaBins][numPtBins];
-  float purFitErrB[numEtaBins][numPtBins],purFitErrSL[numEtaBins][numPtBins], purFitErrST[numEtaBins][numPtBins];
-  float purFitErrBn[numEtaBins][numPtBins],purFitErrSLn[numEtaBins][numPtBins], purFitErrSTn[numEtaBins][numPtBins];
-  float purCntB[numEtaBins][numPtBins],purCntSL[numEtaBins][numPtBins], purCntST[numEtaBins][numPtBins];
-  float purCntBn[numEtaBins][numPtBins],purCntSLn[numEtaBins][numPtBins], purCntSTn[numEtaBins][numPtBins];
-  float purCntErrB[numEtaBins][numPtBins],purCntErrSL[numEtaBins][numPtBins], purCntErrST[numEtaBins][numPtBins];
-  float purCntErrBn[numEtaBins][numPtBins],purCntErrSLn[numEtaBins][numPtBins], purCntErrSTn[numEtaBins][numPtBins];
-  float fitCountSysB[numEtaBins][numPtBins],wwoConstSysB[numEtaBins][numPtBins], purBSysUp[numEtaBins][numPtBins],purBSysDown[numEtaBins][numPtBins];
-  float fitCountSysSL[numEtaBins][numPtBins],wwoConstSysSL[numEtaBins][numPtBins],purSLSysUp[numEtaBins][numPtBins],purSLSysDown[numEtaBins][numPtBins];;
-  float fitCountSysST[numEtaBins][numPtBins],wwoConstSysST[numEtaBins][numPtBins],purSTSysUp[numEtaBins][numPtBins],purSTSysDown[numEtaBins][numPtBins];;
+  float pT[numCentBins][numEtaBins][numPtBins], pTErr[numCentBins][numEtaBins][numPtBins];
+  float purFitB[numCentBins][numEtaBins][numPtBins],purFitSL[numCentBins][numEtaBins][numPtBins], purFitST[numCentBins][numEtaBins][numPtBins];
+  float purFitBn[numCentBins][numEtaBins][numPtBins],purFitSLn[numCentBins][numEtaBins][numPtBins], purFitSTn[numCentBins][numEtaBins][numPtBins];
+  float purFitErrB[numCentBins][numEtaBins][numPtBins],purFitErrSL[numCentBins][numEtaBins][numPtBins], purFitErrST[numCentBins][numEtaBins][numPtBins];
+  float purFitErrBn[numCentBins][numEtaBins][numPtBins],purFitErrSLn[numCentBins][numEtaBins][numPtBins], purFitErrSTn[numCentBins][numEtaBins][numPtBins];
+  float purCntB[numCentBins][numEtaBins][numPtBins],purCntSL[numCentBins][numEtaBins][numPtBins], purCntST[numCentBins][numEtaBins][numPtBins];
+  float purCntBn[numCentBins][numEtaBins][numPtBins],purCntSLn[numCentBins][numEtaBins][numPtBins], purCntSTn[numCentBins][numEtaBins][numPtBins];
+  float purCntErrB[numCentBins][numEtaBins][numPtBins],purCntErrSL[numCentBins][numEtaBins][numPtBins], purCntErrST[numCentBins][numEtaBins][numPtBins];
+  float purCntErrBn[numCentBins][numEtaBins][numPtBins],purCntErrSLn[numCentBins][numEtaBins][numPtBins], purCntErrSTn[numCentBins][numEtaBins][numPtBins];
+  float fitCountSysB[numCentBins][numEtaBins][numPtBins],wwoConstSysB[numCentBins][numEtaBins][numPtBins], purBSysUp[numCentBins][numEtaBins][numPtBins],purBSysDown[numCentBins][numEtaBins][numPtBins];
+  float fitCountSysSL[numCentBins][numEtaBins][numPtBins],wwoConstSysSL[numCentBins][numEtaBins][numPtBins],purSLSysUp[numCentBins][numEtaBins][numPtBins],purSLSysDown[numCentBins][numEtaBins][numPtBins];;
+  float fitCountSysST[numCentBins][numEtaBins][numPtBins],wwoConstSysST[numCentBins][numEtaBins][numPtBins],purSTSysUp[numCentBins][numEtaBins][numPtBins],purSTSysDown[numCentBins][numEtaBins][numPtBins];;
 
   for(int w=0; w<4; w++)
   {
     if(DEBUG) cout << "w: " << w << endl;
-    for(int etabin=0; etabin<numEtaBins; etabin++)
-    {
-      for(int ptbin=0; ptbin<numPtBins; ptbin++)
+    for(int centbin = 0; centbin<numCentBins; centbin++){
+      for(int etabin=0; etabin<numEtaBins; etabin++)
       {
-        nSigBEMC[w][etabin][ptbin] = (TGraphErrors*)BEMC[w]->Get(Form("drawnSigmaE_%i_%i",etabin,ptbin));
-        nSigSMDL[w][etabin][ptbin] = (TGraphErrors*)SMDL[w]->Get(Form("drawnSigmaE_%i_%i",etabin,ptbin));
-        nSigSMDT[w][etabin][ptbin] = (TGraphErrors*)SMDT[w]->Get(Form("drawnSigmaE_%i%i",etabin,ptbin)); 
-        /* nSigBEMCh[w][etabin][ptbin] = (TGraphErrors*)BEMCh[w]->Get(Form("drawnSigmaE_%i_%i",etabin,ptbin));
-           nSigSMDLh[w][etabin][ptbin] = (TGraphErrors*)SMDLh[w]->Get(Form("drawnSigmaE_%i_%i",etabin,ptbin));
-           nSigSMDTh[w][etabin][ptbin] = (TGraphErrors*)SMDTh[w]->Get(Form("drawnSigmaE_%i_%i",etabin,ptbin));*/
+        for(int ptbin=0; ptbin<numPtBins; ptbin++)
+        {
+          nSigBEMC[w][centbin][etabin][ptbin] = (TGraphErrors*)BEMC[w]->Get(Form("drawnSigmaE_%i_%i_%i",centbin,etabin,ptbin));
+          nSigSMDL[w][centbin][etabin][ptbin] = (TGraphErrors*)SMDL[w]->Get(Form("drawnSigmaE_%i_%i_%i",centbin,etabin,ptbin));
+          nSigSMDT[w][centbin][etabin][ptbin] = (TGraphErrors*)SMDT[w]->Get(Form("drawnSigmaE_%i_%i%i",centbin,etabin,ptbin)); 
+          /* nSigBEMCh[w][etabin][ptbin] = (TGraphErrors*)BEMCh[w]->Get(Form("drawnSigmaE_%i_%i",etabin,ptbin));
+             nSigSMDLh[w][etabin][ptbin] = (TGraphErrors*)SMDLh[w]->Get(Form("drawnSigmaE_%i_%i",etabin,ptbin));
+             nSigSMDTh[w][etabin][ptbin] = (TGraphErrors*)SMDTh[w]->Get(Form("drawnSigmaE_%i_%i",etabin,ptbin));*/
+        }
+
+        PurityBEMC[w][centbin][etabin] = (TGraphErrors*)BEMC[w]->Get(Form("drawPurityFit_%i_%i",centbin,etabin));
+        PuritySMDL[w][centbin][etabin] = (TGraphErrors*)SMDL[w]->Get(Form("drawPurityFit_%i_%i",centbin,etabin));
+        PuritySMDT[w][centbin][etabin] = (TGraphErrors*)SMDT[w]->Get(Form("drawPurityFit_%i_%i",centbin,etabin));
+        dNdpTBEMC[w][centbin][etabin] = (TGraphErrors*)BEMC[w]->Get(Form("drawdNdpT_%i_%i",centbin,etabin));
+        dNdpTSMDL[w][centbin][etabin] = (TGraphErrors*)SMDL[w]->Get(Form("drawdNdpT_%i_%i",centbin,etabin));
+        dNdpTSMDT[w][centbin][etabin] = (TGraphErrors*)SMDT[w]->Get(Form("drawdNdpT_%i_%i",centbin,etabin));
+        Purity2BEMC[w][centbin][etabin] = (TGraphErrors*)BEMC[w]->Get(Form("drawPurityFit_%i_%i",centbin,etabin));
+        Purity2SMDL[w][centbin][etabin] = (TGraphErrors*)SMDL[w]->Get(Form("drawPurityFit_%i_%i",centbin,etabin));
+        Purity2SMDT[w][centbin][etabin] = (TGraphErrors*)SMDT[w]->Get(Form("drawPurityFit_%i_%i",centbin,etabin));
+        dNdpT2BEMC[w][centbin][etabin] = (TGraphErrors*)BEMC[w]->Get(Form("drawdNdpT_%i_%i",centbin,etabin));
+        dNdpT2SMDL[w][centbin][etabin] = (TGraphErrors*)SMDL[w]->Get(Form("drawdNdpT_%i_%i",centbin,etabin));
+        dNdpT2SMDT[w][centbin][etabin] = (TGraphErrors*)SMDT[w]->Get(Form("drawdNdpT_%i_%i",centbin,etabin));
+        /* PurityBEMCh[w][centbin][etabin] = (TH1F*)BEMCh[w]->Get(Form("drawPurity_%i",etabin));
+           PuritySMDLh[w][centbin][etabin] = (TH1F*)SMDLh[w]->Get(Form("drawPurity_%i",etabin));
+           PuritySMDTh[w][centbin][etabin] = (TH1F*)SMDTh[w]->Get(Form("drawPurity_%i",etabin));*/
+
+        // Read in information for systematics
+        TString wConstB   = Form("outputs/wConstraint/systematicInformation_%s_BEMC_CentBin%i_EtaBin%i.txt",trigName[w],centbin,etabin);
+        TString wConstS   = Form("outputs/wConstraint/systematicInformation_%s_SMD_CentBin%i_EtaBin%i.txt",trigName[w],centbin,etabin);
+        TString wConstS2  = Form("outputs/wConstraint/systematicInformation_%s_SMD2_CentBin%i_EtaBin%i.txt",trigName[w],centbin,etabin);
+        TString noConstB  = Form("outputs/noConstraint/systematicInformation_%s_BEMC_CentBin%i_EtaBin%i.txt",trigName[w],centbin,etabin);
+        TString noConstS  = Form("outputs/noConstraint/systematicInformation_%s_SMD_CentBin%i_EtaBin%i.txt",trigName[w],centbin,etabin);
+        TString noConstS2 = Form("outputs/noConstraint/systematicInformation_%s_SMD2_CentBin%i_EtaBin%i.txt",trigName[w],centbin,etabin);
+
+        numActiveBins[w] = readSysFile(wConstB,pT[centbin][etabin],pTErr[centbin][etabin],purFitB[centbin][etabin],purFitErrB[centbin][etabin],purCntB[centbin][etabin],purCntErrB[centbin][etabin]);
+        numActiveBins[w] = readSysFile(wConstS,pT[centbin][etabin],pTErr[centbin][etabin],purFitSL[centbin][etabin],purFitErrSL[centbin][etabin],purCntSL[centbin][etabin],purCntErrSL[centbin][etabin]);
+        numActiveBins[w] = readSysFile(wConstS2,pT[centbin][etabin],pTErr[centbin][etabin],purFitST[centbin][etabin],purFitErrST[centbin][etabin],purCntST[centbin][etabin],purCntErrST[centbin][etabin]);
+        numActiveBins[w] = readSysFile(noConstB,pT[centbin][etabin],pTErr[centbin][etabin],purFitBn[centbin][etabin],purFitErrBn[centbin][etabin],purCntBn[centbin][etabin],purCntErrBn[centbin][etabin]);
+        numActiveBins[w] = readSysFile(noConstS,pT[centbin][etabin],pTErr[centbin][etabin],purFitSLn[centbin][etabin],purFitErrSLn[centbin][etabin],purCntSLn[centbin][etabin],purCntErrSLn[centbin][etabin]);
+        numActiveBins[w] = readSysFile(noConstS2,pT[centbin][etabin],pTErr[centbin][etabin],purFitSTn[centbin][etabin],purFitErrSTn[centbin][etabin],purCntSTn[centbin][etabin],purCntErrSTn[centbin][etabin]);
+        for(int ptbin =0; ptbin<numPtBins; ptbin++)
+        {
+          if(DEBUG) cout << pT[centbin][etabin][ptbin] << " " << purFitB[centbin][etabin][ptbin] <<" " << purFitBn[centbin][etabin][ptbin] << endl;
+          fitCountSysB[centbin][etabin][ptbin] = purFitB[centbin][etabin][ptbin] - purCntB[centbin][etabin][ptbin];
+          if(fitCountSysB[centbin][etabin][ptbin] > 0) purBSysDown[centbin][etabin][ptbin] += fitCountSysB[centbin][etabin][ptbin];
+          wwoConstSysB[centbin][etabin][ptbin] = purFitB[centbin][etabin][ptbin] - purFitBn[centbin][etabin][ptbin];
+          if(wwoConstSysB[centbin][etabin][ptbin] > 0) purBSysDown[centbin][etabin][ptbin] += wwoConstSysB[centbin][etabin][ptbin];
+          fitCountSysSL[centbin][etabin][ptbin] = purFitSL[centbin][etabin][ptbin] - purCntSL[centbin][etabin][ptbin];
+          if(fitCountSysSL[centbin][etabin][ptbin] > 0) purSLSysDown[centbin][etabin][ptbin] += fitCountSysSL[centbin][etabin][ptbin];
+          wwoConstSysSL[centbin][etabin][ptbin] = purFitSL[centbin][etabin][ptbin] - purFitSLn[centbin][etabin][ptbin];
+          if(wwoConstSysSL[centbin][etabin][ptbin] > 0) purSLSysDown[centbin][etabin][ptbin] += wwoConstSysSL[centbin][etabin][ptbin];
+          fitCountSysST[centbin][etabin][ptbin] = purFitST[centbin][etabin][ptbin] - purCntST[centbin][etabin][ptbin];
+          if(fitCountSysST[centbin][etabin][ptbin] > 0) purSTSysDown[centbin][etabin][ptbin] += fitCountSysST[centbin][etabin][ptbin];
+          wwoConstSysST[centbin][etabin][ptbin] = purFitST[centbin][etabin][ptbin] - purFitSTn[centbin][etabin][ptbin];
+          if(wwoConstSysST[centbin][etabin][ptbin] > 0) purSTSysDown[centbin][etabin][ptbin] += wwoConstSysST[centbin][etabin][ptbin];
+        }
+        purBSys[w][centbin][etabin] = new TGraphAsymmErrors(numActiveBins[w],pT[centbin][etabin],purFitB[centbin][etabin],0,0,purBSysDown[centbin][etabin],purBSysUp[centbin][etabin]); 
+        purSLSys[w][centbin][etabin] = new TGraphAsymmErrors(numActiveBins[w],pT[centbin][etabin],purFitSL[centbin][etabin],0,0,purSLSysDown[centbin][etabin],purSLSysUp[centbin][etabin]); 
+        purSTSys[w][centbin][etabin] = new TGraphAsymmErrors(numActiveBins[w],pT[centbin][etabin],purFitST[centbin][etabin],0,0,purSTSysDown[centbin][etabin],purSTSysUp[centbin][etabin]); 
       }
-
-      PurityBEMC[w][etabin] = (TGraphErrors*)BEMC[w]->Get(Form("drawPurityFit_%i",etabin));
-      PuritySMDL[w][etabin] = (TGraphErrors*)SMDL[w]->Get(Form("drawPurityFit_%i",etabin));
-      PuritySMDT[w][etabin] = (TGraphErrors*)SMDT[w]->Get(Form("drawPurityFit_%i",etabin));
-      dNdpTBEMC[w][etabin] = (TGraphErrors*)BEMC[w]->Get(Form("drawdNdpT_%i",etabin));
-      dNdpTSMDL[w][etabin] = (TGraphErrors*)SMDL[w]->Get(Form("drawdNdpT_%i",etabin));
-      dNdpTSMDT[w][etabin] = (TGraphErrors*)SMDT[w]->Get(Form("drawdNdpT_%i",etabin));
-      Purity2BEMC[w][etabin] = (TGraphErrors*)BEMC[w]->Get(Form("drawPurityFit_%i",etabin));
-      Purity2SMDL[w][etabin] = (TGraphErrors*)SMDL[w]->Get(Form("drawPurityFit_%i",etabin));
-      Purity2SMDT[w][etabin] = (TGraphErrors*)SMDT[w]->Get(Form("drawPurityFit_%i",etabin));
-      dNdpT2BEMC[w][etabin] = (TGraphErrors*)BEMC[w]->Get(Form("drawdNdpT_%i",etabin));
-      dNdpT2SMDL[w][etabin] = (TGraphErrors*)SMDL[w]->Get(Form("drawdNdpT_%i",etabin));
-      dNdpT2SMDT[w][etabin] = (TGraphErrors*)SMDT[w]->Get(Form("drawdNdpT_%i",etabin));
-      /* PurityBEMCh[w][etabin] = (TH1F*)BEMCh[w]->Get(Form("drawPurity_%i",etabin));
-         PuritySMDLh[w][etabin] = (TH1F*)SMDLh[w]->Get(Form("drawPurity_%i",etabin));
-         PuritySMDTh[w][etabin] = (TH1F*)SMDTh[w]->Get(Form("drawPurity_%i",etabin));*/
-
-      // Read in information for systematics
-      TString wConstB   = Form("outputs/wConstraint/systematicInformation_%s_BEMC_EtaBin%i.txt",trigName[w],etabin);
-      TString wConstS   = Form("outputs/wConstraint/systematicInformation_%s_SMD_EtaBin%i.txt",trigName[w],etabin);
-      TString wConstS2  = Form("outputs/wConstraint/systematicInformation_%s_SMD2_EtaBin%i.txt",trigName[w],etabin);
-      TString noConstB  = Form("outputs/noConstraint/systematicInformation_%s_BEMC_EtaBin%i.txt",trigName[w],etabin);
-      TString noConstS  = Form("outputs/noConstraint/systematicInformation_%s_SMD_EtaBin%i.txt",trigName[w],etabin);
-      TString noConstS2 = Form("outputs/noConstraint/systematicInformation_%s_SMD2_EtaBin%i.txt",trigName[w],etabin);
-
-      numActiveBins[w] = readSysFile(wConstB,pT[etabin],pTErr[etabin],purFitB[etabin],purFitErrB[etabin],purCntB[etabin],purCntErrB[etabin]);
-      numActiveBins[w] = readSysFile(wConstS,pT[etabin],pTErr[etabin],purFitSL[etabin],purFitErrSL[etabin],purCntSL[etabin],purCntErrSL[etabin]);
-      numActiveBins[w] = readSysFile(wConstS2,pT[etabin],pTErr[etabin],purFitST[etabin],purFitErrST[etabin],purCntST[etabin],purCntErrST[etabin]);
-      numActiveBins[w] = readSysFile(noConstB,pT[etabin],pTErr[etabin],purFitBn[etabin],purFitErrBn[etabin],purCntBn[etabin],purCntErrBn[etabin]);
-      numActiveBins[w] = readSysFile(noConstS,pT[etabin],pTErr[etabin],purFitSLn[etabin],purFitErrSLn[etabin],purCntSLn[etabin],purCntErrSLn[etabin]);
-      numActiveBins[w] = readSysFile(noConstS2,pT[etabin],pTErr[etabin],purFitSTn[etabin],purFitErrSTn[etabin],purCntSTn[etabin],purCntErrSTn[etabin]);
-      for(int ptbin =0; ptbin<numPtBins; ptbin++)
-      {
-        if(DEBUG) cout << pT[etabin][ptbin] << " " << purFitB[etabin][ptbin] <<" " << purFitBn[etabin][ptbin] << endl;
-        fitCountSysB[etabin][ptbin] = purFitB[etabin][ptbin] - purCntB[etabin][ptbin];
-        if(fitCountSysB[etabin][ptbin] > 0) purBSysDown[etabin][ptbin] += fitCountSysB[etabin][ptbin];
-        wwoConstSysB[etabin][ptbin] = purFitB[etabin][ptbin] - purFitBn[etabin][ptbin];
-        if(wwoConstSysB[etabin][ptbin] > 0) purBSysDown[etabin][ptbin] += wwoConstSysB[etabin][ptbin];
-        fitCountSysSL[etabin][ptbin] = purFitSL[etabin][ptbin] - purCntSL[etabin][ptbin];
-        if(fitCountSysSL[etabin][ptbin] > 0) purSLSysDown[etabin][ptbin] += fitCountSysSL[etabin][ptbin];
-        wwoConstSysSL[etabin][ptbin] = purFitSL[etabin][ptbin] - purFitSLn[etabin][ptbin];
-        if(wwoConstSysSL[etabin][ptbin] > 0) purSLSysDown[etabin][ptbin] += wwoConstSysSL[etabin][ptbin];
-        fitCountSysST[etabin][ptbin] = purFitST[etabin][ptbin] - purCntST[etabin][ptbin];
-        if(fitCountSysST[etabin][ptbin] > 0) purSTSysDown[etabin][ptbin] += fitCountSysST[etabin][ptbin];
-        wwoConstSysST[etabin][ptbin] = purFitST[etabin][ptbin] - purFitSTn[etabin][ptbin];
-        if(wwoConstSysST[etabin][ptbin] > 0) purSTSysDown[etabin][ptbin] += wwoConstSysST[etabin][ptbin];
-      }
-     purBSys[w][etabin] = new TGraphAsymmErrors(numActiveBins[w],pT[etabin],purFitB[etabin],0,0,purBSysDown[etabin],purBSysUp[etabin]); 
-     purSLSys[w][etabin] = new TGraphAsymmErrors(numActiveBins[w],pT[etabin],purFitSL[etabin],0,0,purSLSysDown[etabin],purSLSysUp[etabin]); 
-     purSTSys[w][etabin] = new TGraphAsymmErrors(numActiveBins[w],pT[etabin],purFitST[etabin],0,0,purSTSysDown[etabin],purSTSysUp[etabin]); 
     } 
   }
   if(DEBUG)
@@ -189,34 +199,37 @@ int pl_EtaComparison(){
 
   // Make Canvas
   TCanvas* purityOL[4];
-  TCanvas* purityTrigOL[4][numEtaBins];
-  TCanvas* purityTrigOL2[4][numEtaBins];
-  for(int etabin=0; etabin<numEtaBins; etabin++)
+  TCanvas* purityTrigOL[4][numCentBins][numEtaBins];
+  TCanvas* purityTrigOL2[4][numCentBins][numEtaBins];
+  for(int centbin = 0; centbin<numCentBins; centbin++)
   {
-    for(int ptbin=0; ptbin<numPtBins; ptbin++)
+    for(int etabin=0; etabin<numEtaBins; etabin++)
     {
-      lbl[etabin][ptbin] = new TPaveText(.67,.25,.85,.3,Form("NB NDC%i",ptbin));
-      if(ptbin==0)lblE[etabin] = new TPaveText(.67,.25,.85,.3,Form("NB NDC%i",ptbin));
+      for(int ptbin=0; ptbin<numPtBins; ptbin++)
+      {
+        lbl[centbin][etabin][ptbin] = new TPaveText(.67,.25,.85,.3,Form("NB NDC%i",ptbin));
+        if(ptbin==0)lblE[centbin][etabin] = new TPaveText(.67,.25,.85,.3,Form("NB NDC%i",ptbin));
+        sprintf(textLabel,"%.2f < #eta < %.2f",loweta[etabin],higheta[etabin]);
+        lbl[centbin][etabin][ptbin]->AddText(textLabel);
+        if(ptbin==0)lblE[centbin][etabin]->AddText(textLabel);
+        sprintf(textLabel,"%.2f < P_{T,e} < %.2f",lowpt[ptbin],highpt[ptbin]);
+        lbl[centbin][etabin][ptbin]->AddText(textLabel);
+        lbl[centbin][etabin][ptbin]->SetFillColor(kWhite); 
+        if(ptbin==0)lblE[centbin][etabin]->SetFillColor(kWhite); 
+      }
+      runInfo[centbin][etabin] = new TPaveText(.55,.77,.85,.87,Form("NB NDC%i",etabin));
+      sprintf(textLabel,"Run 14 Au+Au 200 GeV, %i-%i%% Centrality",getLowCentralityLabel(lowcent[centbin]),getHighCentralityLabel(highcent[centbin]));
+      runInfo[centbin][etabin]->AddText(textLabel);
       sprintf(textLabel,"%.2f < #eta < %.2f",loweta[etabin],higheta[etabin]);
-      lbl[etabin][ptbin]->AddText(textLabel);
-      if(ptbin==0)lblE[etabin]->AddText(textLabel);
-      sprintf(textLabel,"%.2f < P_{T,e} < %.2f",lowpt[ptbin],highpt[ptbin]);
-      lbl[etabin][ptbin]->AddText(textLabel);
-      lbl[etabin][ptbin]->SetFillColor(kWhite); 
-      if(ptbin==0)lblE[etabin]->SetFillColor(kWhite); 
+      runInfo[centbin][etabin]->AddText(textLabel);
+      runInfo[centbin][etabin]->SetFillColor(kWhite);
+      runInfo2[centbin][etabin] = new TPaveText(.55,.81,.85,.87,Form("NB NDC%i",etabin));
+      sprintf(textLabel,"Run 14 Au+Au 200 GeV, 0-80%% Centrality");
+      runInfo2[centbin][etabin]->AddText(textLabel);
+      sprintf(textLabel,"%.2f < #eta < %.2f",loweta[etabin],higheta[etabin]);
+      runInfo2[centbin][etabin]->AddText(textLabel);
+      runInfo2[centbin][etabin]->SetFillColor(kWhite);
     }
-    runInfo[etabin] = new TPaveText(.55,.77,.85,.87,Form("NB NDC%i",etabin));
-    sprintf(textLabel,"Run 14 Au+Au 200 GeV, 0-80%% Centrality");
-    runInfo[etabin]->AddText(textLabel);
-    sprintf(textLabel,"%.2f < #eta < %.2f",loweta[etabin],higheta[etabin]);
-    runInfo[etabin]->AddText(textLabel);
-    runInfo[etabin]->SetFillColor(kWhite);
-    runInfo2[etabin] = new TPaveText(.55,.81,.85,.87,Form("NB NDC%i",etabin));
-    sprintf(textLabel,"Run 14 Au+Au 200 GeV, 0-80%% Centrality");
-    runInfo2[etabin]->AddText(textLabel);
-    sprintf(textLabel,"%.2f < #eta < %.2f",loweta[etabin],higheta[etabin]);
-    runInfo2[etabin]->AddText(textLabel);
-    runInfo2[etabin]->SetFillColor(kWhite);
   }
   if(DEBUG)
     cout << "Canvas Made." << endl;
@@ -228,72 +241,75 @@ int pl_EtaComparison(){
     purityOL[r]= new TCanvas(Form("purityOL_%i",r),"Purity Overlays",50,50,1050,1050);
     purityOL[r]->Divide(2,2);
 
-    for(int etabin=0;etabin<numEtaBins;etabin++)
+    for(int centbin = 0; centbin<numCentBins; centbin++)
     {
-      if(DEBUG) cout << "plot settings eta: " << etabin << endl;
+      for(int etabin=0;etabin<numEtaBins;etabin++)
+      {
+        if(DEBUG) cout << "plot settings eta: " << etabin << endl;
 
-      purityTrigOL[r][etabin]= new TCanvas(Form("purityTrigOL_%i_%i",r,etabin),"Purity Overlays",50,50,1050,1050);
-      purityTrigOL2[r][etabin]= new TCanvas(Form("purityTrigOL2_%i_%i",r,etabin),"Purity Overlays",50,50,1050,1050);
-      purityTrigOL[r][etabin]->Divide(1,2);
-      purityTrigOL2[r][etabin]->Divide(1,2);
-      PurityBEMC[r][etabin]->SetLineColor(1+etabin);
-      PurityBEMC[r][etabin]->SetMarkerColor(1+etabin);
-      PurityBEMC[r][etabin]->SetMarkerStyle(4+etabin);
-      PurityBEMC[r][etabin]->SetTitle(Form("%s BEMC Purity",trigName[r]));
-      if(DEBUG) cout << "purityBEMC" << endl;
+        purityTrigOL[r][centbin][etabin]= new TCanvas(Form("purityTrigOL_%i_%i_%i",r,centbin,etabin),"Purity Overlays",50,50,1050,1050);
+        purityTrigOL2[r][centbin][etabin]= new TCanvas(Form("purityTrigOL2_%i_%i_%i",r,centbin,etabin),"Purity Overlays",50,50,1050,1050);
+        purityTrigOL[r][centbin][etabin]->Divide(1,2);
+        purityTrigOL2[r][centbin][etabin]->Divide(1,2);
+        PurityBEMC[r][centbin][etabin]->SetLineColor(1+etabin);
+        PurityBEMC[r][centbin][etabin]->SetMarkerColor(1+etabin);
+        PurityBEMC[r][centbin][etabin]->SetMarkerStyle(4+etabin);
+        PurityBEMC[r][centbin][etabin]->SetTitle(Form("%s BEMC Purity",trigName[r]));
+        if(DEBUG) cout << "purityBEMC" << endl;
 
-      PuritySMDL[r][etabin]->SetLineColor(1+etabin);
-      PuritySMDL[r][etabin]->SetMarkerColor(1+etabin);
-      PuritySMDL[r][etabin]->SetMarkerStyle(4+etabin);
-      PuritySMDL[r][etabin]->SetTitle(Form("%s SMD Purity",trigName[r]));
-      if(DEBUG) cout << "puritySMDL" << endl;
+        PuritySMDL[r][centbin][etabin]->SetLineColor(1+etabin);
+        PuritySMDL[r][centbin][etabin]->SetMarkerColor(1+etabin);
+        PuritySMDL[r][centbin][etabin]->SetMarkerStyle(4+etabin);
+        PuritySMDL[r][centbin][etabin]->SetTitle(Form("%s SMD Purity",trigName[r]));
+        if(DEBUG) cout << "puritySMDL" << endl;
 
-      PuritySMDT[r][etabin]->SetLineColor(1+etabin);
-      PuritySMDT[r][etabin]->SetMarkerColor(1+etabin);
-      PuritySMDT[r][etabin]->SetMarkerStyle(4+etabin);
-      PuritySMDT[r][etabin]->SetTitle(Form("%s SMD2 Purity",trigName[r]));
-      PurityBEMC[r][etabin]->SetMarkerSize(1.0);
-      PuritySMDL[r][etabin]->SetMarkerSize(1.0);
-      PuritySMDT[r][etabin]->SetMarkerSize(1.0);
-      if(DEBUG) cout << "puritySMDT" << endl;
+        PuritySMDT[r][centbin][etabin]->SetLineColor(1+etabin);
+        PuritySMDT[r][centbin][etabin]->SetMarkerColor(1+etabin);
+        PuritySMDT[r][centbin][etabin]->SetMarkerStyle(4+etabin);
+        PuritySMDT[r][centbin][etabin]->SetTitle(Form("%s SMD2 Purity",trigName[r]));
+        PurityBEMC[r][centbin][etabin]->SetMarkerSize(1.0);
+        PuritySMDL[r][centbin][etabin]->SetMarkerSize(1.0);
+        PuritySMDT[r][centbin][etabin]->SetMarkerSize(1.0);
+        if(DEBUG) cout << "puritySMDT" << endl;
 
-      Purity2BEMC[r][etabin]->SetLineColor(kBlack);
-      Purity2SMDL[r][etabin]->SetLineColor(kRed);
-      Purity2SMDT[r][etabin]->SetLineColor(kBlue);
-      Purity2BEMC[r][etabin]->SetMarkerColor(kBlack);
-      Purity2SMDL[r][etabin]->SetMarkerColor(kRed);
-      Purity2SMDT[r][etabin]->SetMarkerColor(kBlue);
-      Purity2BEMC[r][etabin]->SetMarkerStyle(20);
-      Purity2SMDL[r][etabin]->SetMarkerStyle(21);
-      Purity2SMDT[r][etabin]->SetMarkerStyle(22);
-      Purity2BEMC[r][etabin]->SetMarkerSize(1.0);
-      Purity2SMDL[r][etabin]->SetMarkerSize(1.0);
-      Purity2SMDT[r][etabin]->SetMarkerSize(1.0);
-      Purity2BEMC[r][etabin]->SetTitle(Form("%s Purity Trigger Compare",trigName[r]));
-      if(DEBUG) cout << "purity2" << endl;
+        Purity2BEMC[r][centbin][etabin]->SetLineColor(kBlack);
+        Purity2SMDL[r][centbin][etabin]->SetLineColor(kRed);
+        Purity2SMDT[r][centbin][etabin]->SetLineColor(kBlue);
+        Purity2BEMC[r][centbin][etabin]->SetMarkerColor(kBlack);
+        Purity2SMDL[r][centbin][etabin]->SetMarkerColor(kRed);
+        Purity2SMDT[r][centbin][etabin]->SetMarkerColor(kBlue);
+        Purity2BEMC[r][centbin][etabin]->SetMarkerStyle(20);
+        Purity2SMDL[r][centbin][etabin]->SetMarkerStyle(21);
+        Purity2SMDT[r][centbin][etabin]->SetMarkerStyle(22);
+        Purity2BEMC[r][centbin][etabin]->SetMarkerSize(1.0);
+        Purity2SMDL[r][centbin][etabin]->SetMarkerSize(1.0);
+        Purity2SMDT[r][centbin][etabin]->SetMarkerSize(1.0);
+        Purity2BEMC[r][centbin][etabin]->SetTitle(Form("%s Purity Trigger Compare",trigName[r]));
+        if(DEBUG) cout << "purity2" << endl;
 
-      dNdpT2BEMC[r][etabin]->GetYaxis()->SetRangeUser(1e1,1e6);
-      dNdpT2BEMC[r][etabin]->SetLineColor(kBlack);
-      dNdpT2SMDL[r][etabin]->SetLineColor(kRed);
-      dNdpT2SMDT[r][etabin]->SetLineColor(kBlue);
-      dNdpT2BEMC[r][etabin]->SetMarkerColor(kBlack);
-      dNdpT2SMDL[r][etabin]->SetMarkerColor(kRed);
-      dNdpT2SMDT[r][etabin]->SetMarkerColor(kBlue);
-      dNdpT2BEMC[r][etabin]->SetMarkerStyle(20);
-      dNdpT2SMDL[r][etabin]->SetMarkerStyle(21);
-      dNdpT2SMDT[r][etabin]->SetMarkerStyle(22);
-      dNdpT2BEMC[r][etabin]->SetMarkerSize(1.0);
-      dNdpT2SMDL[r][etabin]->SetMarkerSize(1.0);
-      dNdpT2SMDT[r][etabin]->SetMarkerSize(1.0);
-      dNdpT2BEMC[r][etabin]->SetTitle(Form("%s dN/dpT Trigger Compare",trigName[r]));
-      if(DEBUG) cout << "dndpt2" << endl;
+        dNdpT2BEMC[r][centbin][etabin]->GetYaxis()->SetRangeUser(1e1,1e6);
+        dNdpT2BEMC[r][centbin][etabin]->SetLineColor(kBlack);
+        dNdpT2SMDL[r][centbin][etabin]->SetLineColor(kRed);
+        dNdpT2SMDT[r][centbin][etabin]->SetLineColor(kBlue);
+        dNdpT2BEMC[r][centbin][etabin]->SetMarkerColor(kBlack);
+        dNdpT2SMDL[r][centbin][etabin]->SetMarkerColor(kRed);
+        dNdpT2SMDT[r][centbin][etabin]->SetMarkerColor(kBlue);
+        dNdpT2BEMC[r][centbin][etabin]->SetMarkerStyle(20);
+        dNdpT2SMDL[r][centbin][etabin]->SetMarkerStyle(21);
+        dNdpT2SMDT[r][centbin][etabin]->SetMarkerStyle(22);
+        dNdpT2BEMC[r][centbin][etabin]->SetMarkerSize(1.0);
+        dNdpT2SMDL[r][centbin][etabin]->SetMarkerSize(1.0);
+        dNdpT2SMDT[r][centbin][etabin]->SetMarkerSize(1.0);
+        dNdpT2BEMC[r][centbin][etabin]->SetTitle(Form("%s dN/dpT Trigger Compare",trigName[r]));
+        if(DEBUG) cout << "dndpt2" << endl;
 
-      purBSys[r][etabin]->SetLineColor(kBlack);
-      purBSys[r][etabin]->SetLineWidth(1);
-      purSLSys[r][etabin]->SetLineColor(kRed);
-      purSLSys[r][etabin]->SetLineWidth(1);
-      purSTSys[r][etabin]->SetLineColor(kBlue);
-      purSTSys[r][etabin]->SetLineWidth(1);
+        purBSys[r][centbin][etabin]->SetLineColor(kBlack);
+        purBSys[r][centbin][etabin]->SetLineWidth(1);
+        purSLSys[r][centbin][etabin]->SetLineColor(kRed);
+        purSLSys[r][centbin][etabin]->SetLineWidth(1);
+        purSTSys[r][centbin][etabin]->SetLineColor(kBlue);
+        purSTSys[r][centbin][etabin]->SetLineWidth(1);
+      }
     }
   }
 
@@ -304,78 +320,84 @@ int pl_EtaComparison(){
 
   // Use input for only one ptbin in legend. They're all the same, no need to loop.
   TLegend* leg = new TLegend(0.15,0.15,0.45,0.45);
-  for(int etabin=0;etabin<numEtaBins;etabin++)
+  for(int centbin=0;centbin<numCentBins;centbin++)
   {
-    sprintf(textLabel,"%.2f < #eta < %.2f",loweta[etabin],higheta[etabin]);
-    leg->AddEntry(PurityBEMC[1][etabin],textLabel,"lpe");
+    for(int etabin=0;etabin<numEtaBins;etabin++)
+    {
+      sprintf(textLabel,"%.2f < #eta < %.2f",loweta[etabin],higheta[etabin]);
+      leg->AddEntry(PurityBEMC[1][centbin][etabin],textLabel,"lpe");
+    }
   }
 
   TLegend* leg2 = new TLegend(0.15,0.15,0.30,0.45);
-  leg2->AddEntry(Purity2BEMC[1][0],"BEMC","lpe");
-  leg2->AddEntry(Purity2SMDL[1][0],"SMD","lpe");
-  leg2->AddEntry(Purity2SMDT[1][0],"SMD2","lpe");
+  leg2->AddEntry(Purity2BEMC[1][0][0],"BEMC","lpe");
+  leg2->AddEntry(Purity2SMDL[1][0][0],"SMD","lpe");
+  leg2->AddEntry(Purity2SMDT[1][0][0],"SMD2","lpe");
   TLegend* leg3 = new TLegend(0.15,0.15,0.30,0.30);
-  leg3->AddEntry(Purity2BEMC[1][0],"BEMC","lpe");
-  leg3->AddEntry(Purity2SMDL[1][0],"SMD","lpe");
-  leg3->AddEntry(Purity2SMDT[1][0],"SMD2","lpe");
+  leg3->AddEntry(Purity2BEMC[1][0][0],"BEMC","lpe");
+  leg3->AddEntry(Purity2SMDL[1][0][0],"SMD","lpe");
+  leg3->AddEntry(Purity2SMDT[1][0][0],"SMD2","lpe");
   TLegend* leg4 = new TLegend(0.65,0.65,0.85,0.85);
-  leg4->AddEntry(Purity2BEMC[1][0],"BEMC","lpe");
-  leg4->AddEntry(Purity2SMDL[1][0],"SMD","lpe");
-  leg4->AddEntry(Purity2SMDT[1][0],"SMD2","lpe");
+  leg4->AddEntry(Purity2BEMC[1][0][0],"BEMC","lpe");
+  leg4->AddEntry(Purity2SMDL[1][0][0],"SMD","lpe");
+  leg4->AddEntry(Purity2SMDT[1][0][0],"SMD2","lpe");
   TLegend* leg5 = new TLegend(0.65,0.45,0.80,0.75);
-  leg5->AddEntry(Purity2BEMC[1][0],"BEMC","lpe");
-  leg5->AddEntry(Purity2SMDL[1][0],"SMD","lpe");
-  leg5->AddEntry(Purity2SMDT[1][0],"SMD2","lpe");
+  leg5->AddEntry(Purity2BEMC[1][0][0],"BEMC","lpe");
+  leg5->AddEntry(Purity2SMDL[1][0][0],"SMD","lpe");
+  leg5->AddEntry(Purity2SMDT[1][0][0],"SMD2","lpe");
   if(DEBUG)
     cout << "Legend Made." << endl;
 
   for(int t=0; t<4; t++)
   {
     if(DEBUG) cout << "Trig: " << t << endl;
-    for(int etabin=0;etabin<numEtaBins;etabin++)
+    for(int centbin = 0; centbin<numCentBins; centbin++)
     {
-      purityOL[t]->cd(1);
-      if(etabin==0) PurityBEMC[t][etabin]->Draw("Ape"); 
-      else PurityBEMC[t][etabin]->Draw("same pe");
-      if(etabin==(numEtaBins-1))leg->Draw("same");
+      for(int etabin=0;etabin<numEtaBins;etabin++)
+      {
+        purityOL[t]->cd(1);
+        if(etabin==0) PurityBEMC[t][centbin][etabin]->Draw("Ape"); 
+        else PurityBEMC[t][centbin][etabin]->Draw("same pe");
+        if(etabin==(numEtaBins-1))leg->Draw("same");
 
-      purityOL[t]->cd(2);
-      if(etabin==0)PuritySMDL[t][etabin]->Draw("Ape");
-      else PuritySMDL[t][etabin]->Draw("same pe");
-      if(etabin==(numEtaBins-1))leg->Draw("same");
+        purityOL[t]->cd(2);
+        if(etabin==0)PuritySMDL[t][centbin][etabin]->Draw("Ape");
+        else PuritySMDL[t][centbin][etabin]->Draw("same pe");
+        if(etabin==(numEtaBins-1))leg->Draw("same");
 
-      purityOL[t]->cd(3);
-      if(etabin==0)PuritySMDT[t][etabin]->Draw("Ape");
-      else PuritySMDT[t][etabin]->Draw("same pe");
-      if(etabin==(numEtaBins-1))leg->Draw("same");
+        purityOL[t]->cd(3);
+        if(etabin==0)PuritySMDT[t][centbin][etabin]->Draw("Ape");
+        else PuritySMDT[t][centbin][etabin]->Draw("same pe");
+        if(etabin==(numEtaBins-1))leg->Draw("same");
 
-      purityTrigOL[t][etabin]->cd(1);
-      Purity2BEMC[t][etabin]->Draw("Ape");
-      purBSys[t][etabin]->Draw("[]");
-      Purity2SMDL[t][etabin]->Draw("same pe");
-      purSLSys[t][etabin]->Draw("[]");
-      Purity2SMDT[t][etabin]->Draw("same pe");
-      purSTSys[t][etabin]->Draw("[]");
-      leg2->Draw("same");
-      runInfo[etabin]->Draw("same");
-      purityTrigOL[t][etabin]->cd(2);
-      gPad->SetLogy(1);
-      dNdpT2BEMC[t][etabin]->Draw("Ape");
-      dNdpT2SMDL[t][etabin]->Draw("same pe");
-      dNdpT2SMDT[t][etabin]->Draw("same pe");
-      leg2->Draw("same");
-      //lblE[etabin]->Draw("same");
-      runInfo[etabin]->Draw("same");
+        purityTrigOL[t][centbin][etabin]->cd(1);
+        Purity2BEMC[t][centbin][etabin]->Draw("Ape");
+        purBSys[t][centbin][etabin]->Draw("[]");
+        Purity2SMDL[t][centbin][etabin]->Draw("same pe");
+        purSLSys[t][centbin][etabin]->Draw("[]");
+        Purity2SMDT[t][centbin][etabin]->Draw("same pe");
+        purSTSys[t][centbin][etabin]->Draw("[]");
+        leg2->Draw("same");
+        runInfo[centbin][etabin]->Draw("same");
+        purityTrigOL[t][centbin][etabin]->cd(2);
+        gPad->SetLogy(1);
+        dNdpT2BEMC[t][centbin][etabin]->Draw("Ape");
+        dNdpT2SMDL[t][centbin][etabin]->Draw("same pe");
+        dNdpT2SMDT[t][centbin][etabin]->Draw("same pe");
+        leg2->Draw("same");
+        //lblE[centbin][etabin]->Draw("same");
+        runInfo[centbin][etabin]->Draw("same");
 
-      purityTrigOL2[t][etabin]->cd(1);
-      gPad->SetLogy(1);
-      leg2->Draw("same");
-      runInfo[etabin]->Draw("same");
+        purityTrigOL2[t][centbin][etabin]->cd(1);
+        gPad->SetLogy(1);
+        leg2->Draw("same");
+        runInfo[centbin][etabin]->Draw("same");
 
-      purityTrigOL2[t][etabin]->cd(2);
-      gPad->SetLogy(1);
-      leg5->Draw("same");
-      runInfo[etabin]->Draw("same");
+        purityTrigOL2[t][centbin][etabin]->cd(2);
+        gPad->SetLogy(1);
+        leg5->Draw("same");
+        runInfo[centbin][etabin]->Draw("same");
+      }
     }
   }
   if(DEBUG) cout << "Drawing Finished. " << endl;
@@ -432,12 +454,13 @@ int pl_EtaComparison(){
     if(DEBUG) cout << "Place Canvas in PDF trig: " << q << endl;
     temp = purityOL[q]; // print data canvases
     //temp->Print(name);
+    for(int c=0; c<numCentBins; c++)
     for(int e=0; e<numEtaBins; e++)
     {  
       if(DEBUG) cout << "Place Canvas in PDF eta: " << e << endl;
-      temp = purityTrigOL[q][e]; // print data canvases
+      temp = purityTrigOL[q][c][e]; // print data canvases
       temp->Print(name);
-      temp = purityTrigOL2[q][e]; // print data canvases
+      temp = purityTrigOL2[q][c][e]; // print data canvases
       //temp->Print(name);
     }
   }
@@ -461,7 +484,7 @@ int readSysFile(TString fn, float* pT, float* ptErr, float* purFit, float* purFi
     {
       f.getline(line,100);
       sscanf(line,"%f %f %f %f %f %f",&pT[k],&ptErr[k],&purFit[k],&purFitErr[k],&purCnt[k],&purCntErr[k]);
-//      cout << "[" << line << "]" << endl;
+      //      cout << "[" << line << "]" << endl;
       if(pT[k] > 0.5) k++;
     }
     f.close();
@@ -469,4 +492,13 @@ int readSysFile(TString fn, float* pT, float* ptErr, float* purFit, float* purFi
   else
     cout << "a text file didn't open." << endl;
   return --k;
+}
+
+int getLowCentralityLabel(int x)
+{
+  return 75-x*5;
+}
+int getHighCentralityLabel(int x)
+{
+  return 80-x*5;
 }

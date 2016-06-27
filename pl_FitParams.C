@@ -14,7 +14,7 @@ void setNumFitPars();
 int pl_FitParams(){
   // gStyle->SetOptFit(1111);
   // Set Flags for Code/Plots
-  Bool_t DEBUG = kFALSE;
+  Bool_t DEBUG = kTRUE;
   int isLogY = 1;
 
   // Access outside required info
@@ -34,13 +34,19 @@ int pl_FitParams(){
     loweta[c] = anaConst::etaLow[c];
     higheta[c] = anaConst::etaHigh[c];
   }
+  const Int_t numCentBins = anaConst::nCentBins;
+  Float_t lowcent[numCentBins],highcent[numCentBins];
+  for(Int_t c=0; c< numCentBins; c++){
+    lowcent[c] = anaConst::centLow[c];
+    highcent[c] = anaConst::centHigh[c];
+  }
   const int numparams = 9;
 
   // create generic structures for use in all plots
-  TPaveText* lbl[numEtaBins][numparams];
-  TPaveText* lblE[numEtaBins];
-  TPaveText* runInfo[numEtaBins];
-  TPaveText* runInfo2[numEtaBins];
+  TPaveText* lbl[numCentBins][numEtaBins][numparams];
+  TPaveText* lblE[numCentBins][numEtaBins];
+  TPaveText* runInfo[numCentBins][numEtaBins];
+  TPaveText* runInfo2[numCentBins][numEtaBins];
   char textLabel[100]; 
   TString parNames[12] = {" #pi C"," #pi #mu"," #pi #sigma"," Kp C"," Kp #mu"," Kp #sigma",
     " e C"," e #mu"," e #sigma"," mer. #pi C"," mer. #pi #mu"," mer. #pi #sigma"};
@@ -78,20 +84,20 @@ int pl_FitParams(){
   }
 
   // Access histograms
-  Int_t nparTotal[3][numEtaBins][numparams];
-  TGraphErrors* parTotal[3][numEtaBins][numparams];
-  TF1* fitTotal[3][numEtaBins][numparams];
-  TF1* fitTotalRatio[3][numEtaBins][numparams];
+  Int_t nparTotal[3][numCentBins][numEtaBins][numparams];
+  TGraphErrors* parTotal[3][numCentBins][numEtaBins][numparams];
+  TF1* fitTotal[3][numCentBins][numEtaBins][numparams];
+  TF1* fitTotalRatio[3][numCentBins][numEtaBins][numparams];
 
-  TGraphErrors* parBEMC[4][numEtaBins][numparams];
-  TGraphErrors* parSMDL[4][numEtaBins][numparams];
-  TGraphErrors* parSMDT[4][numEtaBins][numparams];
-  TGraphErrors* parBEMCRatio[4][numEtaBins][numparams];
-  TGraphErrors* parSMDLRatio[4][numEtaBins][numparams];
-  TGraphErrors* parSMDTRatio[4][numEtaBins][numparams];
-  TF1* fitBEMC[4][numEtaBins][numparams];
-  TF1* fitSMDL[4][numEtaBins][numparams];
-  TF1* fitSMDT[4][numEtaBins][numparams];
+  TGraphErrors* parBEMC[4][numCentBins][numEtaBins][numparams];
+  TGraphErrors* parSMDL[4][numCentBins][numEtaBins][numparams];
+  TGraphErrors* parSMDT[4][numCentBins][numEtaBins][numparams];
+  TGraphErrors* parBEMCRatio[4][numCentBins][numEtaBins][numparams];
+  TGraphErrors* parSMDLRatio[4][numCentBins][numEtaBins][numparams];
+  TGraphErrors* parSMDTRatio[4][numCentBins][numEtaBins][numparams];
+  TF1* fitBEMC[4][numCentBins][numEtaBins][numparams];
+  TF1* fitSMDL[4][numCentBins][numEtaBins][numparams];
+  TF1* fitSMDT[4][numCentBins][numEtaBins][numparams];
 
   float fitRangeLow[4] = {3,2,3.5,4.5};
   float fitRangeHigh[4] = {7,18,18,18};
@@ -109,22 +115,25 @@ int pl_FitParams(){
     {0.065,4.74,-0.26,0.435},
     {0.058,4.02,1.31,-1.04},
   };
-    
-  for(int etabin=0; etabin<numEtaBins; etabin++)
+
+  for(int centbin=0; centbin<numCentBins; centbin++)
   {
-    for(int parnum=0; parnum<numparams; parnum++)
+    for(int etabin=0; etabin<numEtaBins; etabin++)
     {
-      for(int ier=0;ier<3;ier++) {
-        parTotal[ier][etabin][parnum] = new TGraphErrors();
-        nparTotal[ier][etabin][parnum] = 0;
-        fitTotal[ier][etabin][parnum] = new TF1(Form("Fit_%i_%i_%i",ier,etabin,parnum),myFunc,anaConst::lowPt,anaConst::highPt,numFitPars);
-        if(ier!=1) fitTotal[ier][etabin][parnum]->SetLineStyle(2);
-        fitTotalRatio[ier][etabin][parnum] = new TF1(Form("FitRatio_%i_%i_%i",ier,etabin,parnum),myFuncScaled,anaConst::lowPt,anaConst::highPt,5);
-        if(ier!=1) fitTotalRatio[ier][etabin][parnum]->SetLineStyle(2);
-          
-        for(int ll=0;ll<4;ll++)
-        {
-          fitTotal[ier][etabin][parnum]->SetParameter(ll,parStart[parnum][ll]);
+      for(int parnum=0; parnum<numparams; parnum++)
+      {
+        for(int ier=0;ier<3;ier++) {
+          parTotal[ier][centbin][etabin][parnum] = new TGraphErrors();
+          nparTotal[ier][centbin][etabin][parnum] = 0;
+          fitTotal[ier][centbin][etabin][parnum] = new TF1(Form("Fit_%i_%i_%i_%i",ier,centbin,etabin,parnum),myFunc,anaConst::lowPt,anaConst::highPt,numFitPars);
+          if(ier!=1) fitTotal[ier][centbin][etabin][parnum]->SetLineStyle(2);
+          fitTotalRatio[ier][centbin][etabin][parnum] = new TF1(Form("FitRatio_%i_%i_%i_%i",ier,centbin,etabin,parnum),myFuncScaled,anaConst::lowPt,anaConst::highPt,5);
+          if(ier!=1) fitTotalRatio[ier][centbin][etabin][parnum]->SetLineStyle(2);
+
+          for(int ll=0;ll<4;ll++)
+          {
+            fitTotal[ier][centbin][etabin][parnum]->SetParameter(ll,parStart[parnum][ll]);
+          }
         }
       }
     }
@@ -133,114 +142,126 @@ int pl_FitParams(){
   for(int w=0; w<4; w++)
   {
     if(DEBUG) cout << "w: " << w << endl;
+    for(int centbin=0; centbin<numCentBins; centbin++)
+    {
+      for(int etabin=0; etabin<numEtaBins; etabin++)
+      {
+        for(int parnum=0; parnum<numparams; parnum++)
+        {
+          parBEMC[w][centbin][etabin][parnum] = (TGraphErrors*)BEMC[w]->Get(Form("fitpar_%i_%i_%i",centbin,etabin,parnum));
+          parSMDL[w][centbin][etabin][parnum] = (TGraphErrors*)SMDL[w]->Get(Form("fitpar_%i_%i_%i",centbin,etabin,parnum));
+          parSMDT[w][centbin][etabin][parnum] = (TGraphErrors*)SMDT[w]->Get(Form("fitpar_%i_%i_%i",centbin,etabin,parnum));
+
+          for(int np=0;np<parBEMC[w][centbin][etabin][parnum]->GetN();np++) {
+            parBEMC[w][centbin][etabin][parnum]->GetPoint(np,x,y);
+            xerr=parBEMC[w][centbin][etabin][parnum]->GetErrorX(np);
+            yerr=parBEMC[w][centbin][etabin][parnum]->GetErrorY(np);
+            if(fabs(x)>1e-6&&fabs(y)>1e-6&&(w==1||w==2)) {
+              for(int ier=0;ier<3;ier++) {
+                parTotal[ier][centbin][etabin][parnum]->SetPoint(nparTotal[ier][centbin][etabin][parnum],x,y+(ier-1)*yerr);
+                parTotal[ier][centbin][etabin][parnum]->SetPointError(nparTotal[ier][centbin][etabin][parnum],xerr,yerr);
+                nparTotal[ier][centbin][etabin][parnum]++;
+              }
+            }
+          }
+          for(int np=0;np<parSMDL[w][centbin][etabin][parnum]->GetN();np++) {
+            parSMDL[w][centbin][etabin][parnum]->GetPoint(np,x,y);
+            xerr=parSMDL[w][centbin][etabin][parnum]->GetErrorX(np);
+            yerr=parSMDL[w][centbin][etabin][parnum]->GetErrorY(np);
+            if(fabs(x)>1e-6&&fabs(y)>1e-6&&(w==1||w==2)) {
+              for(int ier=0;ier<3;ier++) {
+                parTotal[ier][centbin][etabin][parnum]->SetPoint(nparTotal[ier][centbin][etabin][parnum],x,y+(ier-1)*yerr);
+                parTotal[ier][centbin][etabin][parnum]->SetPointError(nparTotal[ier][centbin][etabin][parnum],xerr,yerr);
+                nparTotal[ier][centbin][etabin][parnum]++;
+              }
+            }
+          }
+          for(int np=0;np<parSMDT[w][centbin][etabin][parnum]->GetN();np++) {
+            parSMDT[w][centbin][etabin][parnum]->GetPoint(np,x,y);
+            xerr=parSMDT[w][centbin][etabin][parnum]->GetErrorX(np);
+            yerr=parSMDT[w][centbin][etabin][parnum]->GetErrorY(np);
+            if(fabs(x)>1e-6&&fabs(y)>1e-6&&(w==1||w==2)) {
+              for(int ier=0;ier<3;ier++) {
+                parTotal[ier][centbin][etabin][parnum]->SetPoint(nparTotal[ier][centbin][etabin][parnum],x,y+(ier-1)*yerr);
+                parTotal[ier][centbin][etabin][parnum]->SetPointError(nparTotal[ier][centbin][etabin][parnum],xerr,yerr);
+                nparTotal[ier][centbin][etabin][parnum]++;
+              }
+            }
+          }
+
+          fitBEMC[w][centbin][etabin][parnum] = new TF1(Form("BEMCFit_%i_%i_%i_%i",w,centbin,etabin,parnum),myFunc,fitRangeLow[w],fitRangeHigh[w],numFitPars);
+          fitSMDL[w][centbin][etabin][parnum] = new TF1(Form("SMDLFit_%i_%i_%i_%i",w,centbin,etabin,parnum),myFunc,fitRangeLow[w],fitRangeHigh[w],numFitPars);
+          fitSMDT[w][centbin][etabin][parnum] = new TF1(Form("SMDTFit_%i_%i_%i_%i",w,centbin,etabin,parnum),myFunc,fitRangeLow[w],fitRangeHigh[w],numFitPars);
+
+          for(int ll=0;ll<4;ll++)
+          {
+            fitBEMC[w][centbin][etabin][parnum]->SetParameter(ll,parStart[parnum][ll]);
+            fitSMDL[w][centbin][etabin][parnum]->SetParameter(ll,parStart[parnum][ll]);
+            fitSMDT[w][centbin][etabin][parnum]->SetParameter(ll,parStart[parnum][ll]);
+          }
+          parBEMC[w][centbin][etabin][parnum]->SetMarkerSize(1.5);
+          parSMDL[w][centbin][etabin][parnum]->SetMarkerSize(1.5);
+          parSMDT[w][centbin][etabin][parnum]->SetMarkerSize(1.5);
+        }
+      }
+    }
+  }
+
+  for(int centbin=0; centbin<numCentBins; centbin++)
+  {
     for(int etabin=0; etabin<numEtaBins; etabin++)
     {
       for(int parnum=0; parnum<numparams; parnum++)
       {
-        parBEMC[w][etabin][parnum] = (TGraphErrors*)BEMC[w]->Get(Form("fitpar_%i_%i",etabin,parnum));
-        parSMDL[w][etabin][parnum] = (TGraphErrors*)SMDL[w]->Get(Form("fitpar_%i_%i",etabin,parnum));
-        parSMDT[w][etabin][parnum] = (TGraphErrors*)SMDT[w]->Get(Form("fitpar_%i_%i",etabin,parnum));
-          
-        for(int np=0;np<parBEMC[w][etabin][parnum]->GetN();np++) {
-          parBEMC[w][etabin][parnum]->GetPoint(np,x,y);
-          xerr=parBEMC[w][etabin][parnum]->GetErrorX(np);
-          yerr=parBEMC[w][etabin][parnum]->GetErrorY(np);
-          if(fabs(x)>1e-6&&fabs(y)>1e-6&&(w==1||w==2)) {
-            for(int ier=0;ier<3;ier++) {
-              parTotal[ier][etabin][parnum]->SetPoint(nparTotal[ier][etabin][parnum],x,y+(ier-1)*yerr);
-              parTotal[ier][etabin][parnum]->SetPointError(nparTotal[ier][etabin][parnum],xerr,yerr);
-              nparTotal[ier][etabin][parnum]++;
-            }
-          }
-        }
-        for(int np=0;np<parSMDL[w][etabin][parnum]->GetN();np++) {
-          parSMDL[w][etabin][parnum]->GetPoint(np,x,y);
-          xerr=parSMDL[w][etabin][parnum]->GetErrorX(np);
-          yerr=parSMDL[w][etabin][parnum]->GetErrorY(np);
-          if(fabs(x)>1e-6&&fabs(y)>1e-6&&(w==1||w==2)) {
-            for(int ier=0;ier<3;ier++) {
-              parTotal[ier][etabin][parnum]->SetPoint(nparTotal[ier][etabin][parnum],x,y+(ier-1)*yerr);
-              parTotal[ier][etabin][parnum]->SetPointError(nparTotal[ier][etabin][parnum],xerr,yerr);
-              nparTotal[ier][etabin][parnum]++;
-            }
-          }
-        }
-        for(int np=0;np<parSMDT[w][etabin][parnum]->GetN();np++) {
-          parSMDT[w][etabin][parnum]->GetPoint(np,x,y);
-          xerr=parSMDT[w][etabin][parnum]->GetErrorX(np);
-          yerr=parSMDT[w][etabin][parnum]->GetErrorY(np);
-          if(fabs(x)>1e-6&&fabs(y)>1e-6&&(w==1||w==2)) {
-            for(int ier=0;ier<3;ier++) {
-              parTotal[ier][etabin][parnum]->SetPoint(nparTotal[ier][etabin][parnum],x,y+(ier-1)*yerr);
-              parTotal[ier][etabin][parnum]->SetPointError(nparTotal[ier][etabin][parnum],xerr,yerr);
-              nparTotal[ier][etabin][parnum]++;
-            }
-          }
-        }
-          
-        fitBEMC[w][etabin][parnum] = new TF1(Form("BEMCFit_%i_%i_%i",w,etabin,parnum),myFunc,fitRangeLow[w],fitRangeHigh[w],numFitPars);
-        fitSMDL[w][etabin][parnum] = new TF1(Form("SMDLFit_%i_%i_%i",w,etabin,parnum),myFunc,fitRangeLow[w],fitRangeHigh[w],numFitPars);
-        fitSMDT[w][etabin][parnum] = new TF1(Form("SMDTFit_%i_%i_%i",w,etabin,parnum),myFunc,fitRangeLow[w],fitRangeHigh[w],numFitPars);
-
-        for(int ll=0;ll<4;ll++)
-        {
-          fitBEMC[w][etabin][parnum]->SetParameter(ll,parStart[parnum][ll]);
-          fitSMDL[w][etabin][parnum]->SetParameter(ll,parStart[parnum][ll]);
-          fitSMDT[w][etabin][parnum]->SetParameter(ll,parStart[parnum][ll]);
-        }
-        parBEMC[w][etabin][parnum]->SetMarkerSize(1.5);
-        parSMDL[w][etabin][parnum]->SetMarkerSize(1.5);
-        parSMDT[w][etabin][parnum]->SetMarkerSize(1.5);
-      }
-    }
-  }
-
-  for(int etabin=0; etabin<numEtaBins; etabin++)
-  {
-    for(int parnum=0; parnum<numparams; parnum++)
-    {
-      for(int ier=0;ier<3;ier++) {
+        for(int ier=0;ier<3;ier++) {
           if(parnum%3!=0) {
-              parTotal[1][etabin][parnum]->Fit(fitTotal[ier][etabin][parnum],"R0");
-              fitTotal[ier][etabin][parnum]->SetParameter(0,fitTotal[ier][etabin][parnum]->GetParameter(0)*(0.92+0.08*ier));
-              fitTotal[ier][etabin][parnum]->SetParameter(3,fitTotal[ier][etabin][parnum]->GetParameter(3)*(0.92+0.08*ier));
+            parTotal[1][centbin][etabin][parnum]->Fit(fitTotal[ier][centbin][etabin][parnum],"R0");
+            fitTotal[ier][centbin][etabin][parnum]->SetParameter(0,fitTotal[ier][centbin][etabin][parnum]->GetParameter(0)*(0.92+0.08*ier));
+            fitTotal[ier][centbin][etabin][parnum]->SetParameter(3,fitTotal[ier][centbin][etabin][parnum]->GetParameter(3)*(0.92+0.08*ier));
           }
+        }
       }
     }
-  }
-  for(int etabin=0; etabin<numEtaBins; etabin++)
-  {
-    for(int parnum=0; parnum<numparams; parnum++)
+    for(int etabin=0; etabin<numEtaBins; etabin++)
     {
-      for(int ier=0;ier<3;ier++) {
-        double pars[5];
-        fitTotal[1][etabin][parnum]->GetParameters(pars);
-        pars[4]=0.92+0.08*ier;
-        fitTotalRatio[ier][etabin][parnum]->SetParameters(pars);
+      for(int parnum=0; parnum<numparams; parnum++)
+      {
+        for(int ier=0;ier<3;ier++) {
+          double pars[5];
+          fitTotal[1][centbin][etabin][parnum]->GetParameters(pars);
+          pars[4]=0.92+0.08*ier;
+          fitTotalRatio[ier][centbin][etabin][parnum]->SetParameters(pars);
+        }
       }
     }
   }
-    
+
   if(DEBUG)
     cout << "Found Hists." << endl;
 
   // Make Canvas
-  TCanvas* paramCanvTotal[numEtaBins];
-  for(int etabin=0;etabin<numEtaBins;etabin++)
+  TCanvas* paramCanvTotal[numCentBins][numEtaBins];
+  for(int centbin=0; centbin<numCentBins; centbin++)
   {
-    if(DEBUG) cout << "plot settings eta: " << etabin << endl;
-    paramCanvTotal[etabin]= new TCanvas(Form("paramCanvTotal_%i",etabin),"Parameter Fits",50,50,1050,1050);
-    paramCanvTotal[etabin]->Divide(3,3);
+    for(int etabin=0;etabin<numEtaBins;etabin++)
+    {
+      if(DEBUG) cout << "plot settings eta: " << etabin << endl;
+      paramCanvTotal[centbin][etabin]= new TCanvas(Form("paramCanvTotal_%i_%i",centbin,etabin),"Parameter Fits",50,50,1050,1050);
+      paramCanvTotal[centbin][etabin]->Divide(3,3);
+    }
   }
-  TCanvas* paramCanvRatio[numEtaBins];
-  for(int etabin=0;etabin<numEtaBins;etabin++)
+  TCanvas* paramCanvRatio[numCentBins][numEtaBins];
+  for(int centbin=0; centbin<numCentBins; centbin++)
   {
-    if(DEBUG) cout << "plot settings eta: " << etabin << endl;
-    paramCanvRatio[etabin]= new TCanvas(Form("paramCanvRatio_%i",etabin),"Parameter Fits",50,50,1050,1050);
-    paramCanvRatio[etabin]->Divide(3,3);
+    for(int etabin=0;etabin<numEtaBins;etabin++)
+    {
+      if(DEBUG) cout << "plot settings eta: " << etabin << endl;
+      paramCanvRatio[centbin][etabin]= new TCanvas(Form("paramCanvRatio_%i_%i",centbin,etabin),"Parameter Fits",50,50,1050,1050);
+      paramCanvRatio[centbin][etabin]->Divide(3,3);
+    }
   }
-    
-  TCanvas* paramCanv[3][4][numEtaBins];
+
+  TCanvas* paramCanv[3][4][numCentBins][numEtaBins];
   if(DEBUG)
     cout << "Canvas Made." << endl;
 
@@ -249,137 +270,143 @@ int pl_FitParams(){
   {
     if(DEBUG) cout << "plot settings trig: " << r << endl;
 
-    for(int etabin=0;etabin<numEtaBins;etabin++)
+    for(int centbin=0; centbin<numCentBins; centbin++)
     {
-      if(DEBUG) cout << "plot settings eta: " << etabin << endl;
-      for(int j=0; j<3; j++)
+      for(int etabin=0;etabin<numEtaBins;etabin++)
       {
-        paramCanv[j][r][etabin]= new TCanvas(Form("paramCanv_%i_%i_%i",j,r,etabin),"Parameter Fits",50,50,1050,1050);
-        paramCanv[j][r][etabin]->Divide(3,3);
+        if(DEBUG) cout << "plot settings eta: " << etabin << endl;
+        for(int j=0; j<3; j++)
+        {
+          paramCanv[j][r][centbin][etabin]= new TCanvas(Form("paramCanv_%i_%i_%i_%i",j,r,centbin,etabin),"Parameter Fits",50,50,1050,1050);
+          paramCanv[j][r][centbin][etabin]->Divide(3,3);
+        }
       }
     }
   }
 
   if(DEBUG)
     cout << "Settings Assigned." << endl;
-// Regular constraints
- // float lowLimit[12] = {0.,-6.,0.8,0.,-5.,0.8,0.,-0.5,0.8,0.,2.,0.8};
- // float highLimit[12] = {100000,-4.,1.2,100000,-2.,1.2,10000,-0.12,1.2,100000,4.,1.5};
+  // Regular constraints
+  // float lowLimit[12] = {0.,-6.,0.8,0.,-5.,0.8,0.,-0.5,0.8,0.,2.,0.8};
+  // float highLimit[12] = {100000,-4.,1.2,100000,-2.,1.2,10000,-0.12,1.2,100000,4.,1.5};
   // "No" constraints (just force electron mean to be right of pi and Kp
   //float lowLimit[12] = {-100000.,-6.,0.,-100000., -5.,0.0,-100000,-2,0.0,-100000,2.,0.0};
   //float highLimit[12] = {100000.,-4.,100.,100000.,-2.,100,100000,  2,100,100000, 4.,100};
   for(int t=0; t<4; t++)
   {
     if(DEBUG) cout << "Trig: " << t << endl;
-    for(int etabin=0;etabin<numEtaBins;etabin++)
+    for(int centbin=0; centbin<numCentBins; centbin++)
     {
-      for(int parnum=0; parnum<numparams; parnum++)
+      for(int etabin=0;etabin<numEtaBins;etabin++)
       {
-        TLine* lineLow = new TLine(2.5,anaConst::lowLimit[parnum],14,anaConst::lowLimit[parnum]);
-        lineLow->SetLineColor(kBlue);
-        TLine* lineHigh = new TLine(2.5,anaConst::highLimit[parnum],14,anaConst::highLimit[parnum]);
-        lineHigh->SetLineColor(kBlue);
+        for(int parnum=0; parnum<numparams; parnum++)
+        {
+          TLine* lineLow = new TLine(2.5,anaConst::lowLimit[parnum],14,anaConst::lowLimit[parnum]);
+          lineLow->SetLineColor(kBlue);
+          TLine* lineHigh = new TLine(2.5,anaConst::highLimit[parnum],14,anaConst::highLimit[parnum]);
+          lineHigh->SetLineColor(kBlue);
 
-        TString title = trigName[t] + parNames[parnum];
-        if(DEBUG) cout << "BEMC Par Num: " << parnum << endl;
-        parBEMC[t][etabin][parnum]->SetTitle("BEMC "+title);
-        parBEMC[t][etabin][parnum]->SetMarkerStyle(20+t);
-        parBEMC[t][etabin][parnum]->SetMarkerColor(2);
-        parBEMC[t][etabin][parnum]->SetLineColor(2);
-        setRangeAndDraw(parBEMC[t][etabin][parnum],parnum, paramCanv[0][t][etabin]);
-        //findRejectPoints(t,1,parnum);
-        fitBEMC[t][etabin][parnum]->SetLineColor(2);
-        cout << "Fit: BEMC, Trig: " << t << ", Par: " << parnum << endl; 
-        if(!((parnum%3) == 0))
-          parBEMC[t][etabin][parnum]->Fit(fitBEMC[t][etabin][parnum],"R0");
-        parBEMCRatio[t][etabin][parnum]=(TGraphErrors*)parBEMC[t][etabin][parnum]->Clone();
-        Double_t x,y;
-          
-        for(int np=0;np<parBEMCRatio[t][etabin][parnum]->GetN();np++){
-          parBEMCRatio[t][etabin][parnum]->GetPoint(np,x,y);
-          parBEMCRatio[t][etabin][parnum]->SetPoint(np,x,y/fitTotal[1][etabin][parnum]->Eval(x));
-          parBEMCRatio[t][etabin][parnum]->SetPointError(np,parBEMCRatio[t][etabin][parnum]->GetErrorX(np),parBEMCRatio[t][etabin][parnum]->GetErrorY(np)/fitTotal[1][etabin][parnum]->Eval(x));
-        }
-        parBEMCRatio[t][etabin][parnum]->GetXaxis()->SetRangeUser(anaConst::lowPt,anaConst::highPt);
-        parBEMCRatio[t][etabin][parnum]->GetYaxis()->SetRangeUser(0.8,1.2);
-        lineLow->Draw("same");
-        lineHigh->Draw("same");
-cout<<"xxx"<<endl;
-        if(DEBUG) cout << "SMDL Par Num: " << parnum << endl;
-        parSMDL[t][etabin][parnum]->SetTitle("SMD "+title);
-        parSMDL[t][etabin][parnum]->SetMarkerStyle(20+t);
-        parSMDL[t][etabin][parnum]->SetMarkerColor(3);
-        parSMDL[t][etabin][parnum]->SetLineColor(3);
-          cout<<"xxx"<<endl;
-        setRangeAndDraw(parSMDL[t][etabin][parnum],parnum,paramCanv[1][t][etabin]);
-          cout<<"xxx"<<endl;
-        //findRejectPoints(t,2,parnum);
-        fitSMDL[t][etabin][parnum]->SetLineColor(3);
-        cout << "Fit: SMDL, Trig: " << t << ", Par: " << parnum << endl; 
-        if(!((parnum%3) == 0))
-          parSMDL[t][etabin][parnum]->Fit(fitSMDL[t][etabin][parnum],"R0");
-        parSMDLRatio[t][etabin][parnum]=(TGraphErrors*)parSMDL[t][etabin][parnum]->Clone();
-        for(int np=0;np<parBEMCRatio[t][etabin][parnum]->GetN();np++){
-          parSMDLRatio[t][etabin][parnum]->GetPoint(np,x,y);
-          parSMDLRatio[t][etabin][parnum]->SetPoint(np,x,y/fitTotal[1][etabin][parnum]->Eval(x));
-          parSMDLRatio[t][etabin][parnum]->SetPointError(np,parSMDLRatio[t][etabin][parnum]->GetErrorX(np),parSMDLRatio[t][etabin][parnum]->GetErrorY(np)/fitTotal[1][etabin][parnum]->Eval(x));
-        }
-        lineLow->Draw("same");
-        lineHigh->Draw("same");
-cout<<"xxx"<<endl;
-        if(DEBUG) cout << "SMDT Par Num: " << parnum << endl;
-        parSMDT[t][etabin][parnum]->SetTitle("SMD2 "+title);
-        parSMDT[t][etabin][parnum]->SetMarkerStyle(20+t);
-        parSMDT[t][etabin][parnum]->SetMarkerColor(4);
-        parSMDT[t][etabin][parnum]->SetLineColor(4);
-        setRangeAndDraw(parSMDT[t][etabin][parnum],parnum,paramCanv[2][t][etabin]);
-        //findRejectPoints(t,3,parnum);
-        fitSMDT[t][etabin][parnum]->SetLineColor(4);
-        cout << "Fit: SMDT, Trig: " << t << ", Par: " << parnum << endl; 
-        if(!((parnum%3) == 0))
-          parSMDT[t][etabin][parnum]->Fit(fitSMDT[t][etabin][parnum],"R0");
-        parSMDTRatio[t][etabin][parnum]=(TGraphErrors*)parSMDT[t][etabin][parnum]->Clone();
-        for(int np=0;np<parBEMCRatio[t][etabin][parnum]->GetN();np++){
-          parSMDTRatio[t][etabin][parnum]->GetPoint(np,x,y);
-          parSMDTRatio[t][etabin][parnum]->SetPoint(np,x,y/fitTotal[1][etabin][parnum]->Eval(x));
-          parSMDTRatio[t][etabin][parnum]->SetPointError(np,parSMDTRatio[t][etabin][parnum]->GetErrorX(np),parSMDTRatio[t][etabin][parnum]->GetErrorY(np)/fitTotal[1][etabin][parnum]->Eval(x));
-        }
-        lineLow->Draw("same");
-        lineHigh->Draw("same");
+          TString title = trigName[t] + parNames[parnum];
+          if(DEBUG) cout << "BEMC Par Num: " << parnum << endl;
+          parBEMC[t][centbin][etabin][parnum]->SetTitle("BEMC "+title);
+          parBEMC[t][centbin][etabin][parnum]->SetMarkerStyle(20+t);
+          parBEMC[t][centbin][etabin][parnum]->SetMarkerColor(2);
+          parBEMC[t][centbin][etabin][parnum]->SetLineColor(2);
+          setRangeAndDraw(parBEMC[t][centbin][etabin][parnum],parnum, paramCanv[0][t][centbin][etabin]);
+          //findRejectPoints(t,1,parnum);
+          fitBEMC[t][centbin][etabin][parnum]->SetLineColor(2);
+          cout << "Fit: BEMC, Trig: " << t << ", Par: " << parnum << endl; 
+          if(!((parnum%3) == 0))
+            parBEMC[t][centbin][etabin][parnum]->Fit(fitBEMC[t][centbin][etabin][parnum],"R0");
+          parBEMCRatio[t][centbin][etabin][parnum]=(TGraphErrors*)parBEMC[t][centbin][etabin][parnum]->Clone();
+          Double_t x,y;
 
-        if(t==0) {
-          //parBEMC[t][etabin][parnum]->Draw("pae");
-          setRangeAndDraw(parTotal[1][etabin][parnum],parnum,paramCanvTotal[etabin]);
-        }
-        if(t<3) {
-            paramCanvTotal[etabin]->cd(parnum+1);
-            parBEMC[t][etabin][parnum]->Draw("pesame");
-            parSMDL[t][etabin][parnum]->Draw("pesame");
-            parSMDT[t][etabin][parnum]->Draw("pesame");
-        }
-        if(t==2&&parnum%3!=0) {
-          paramCanvTotal[etabin]->cd(parnum+1);
-          for(int ier=0;ier<3;ier++) fitTotal[ier][etabin][parnum]->Draw("same");
-        }
-        lineLow->Draw("same");
-        lineHigh->Draw("same");
-          
-        /*else parBEMC[t][etabin][parnum]->Draw("pesame");
-        parSMDL[t][etabin][parnum]->Draw("pesame");
-        parSMDT[t][etabin][parnum]->Draw("pesame");*/
-          
-        paramCanvRatio[etabin]->cd(parnum+1);
-        if(parnum%3!=0) {
+          for(int np=0;np<parBEMCRatio[t][centbin][etabin][parnum]->GetN();np++){
+            parBEMCRatio[t][centbin][etabin][parnum]->GetPoint(np,x,y);
+            parBEMCRatio[t][centbin][etabin][parnum]->SetPoint(np,x,y/fitTotal[1][centbin][etabin][parnum]->Eval(x));
+            parBEMCRatio[t][centbin][etabin][parnum]->SetPointError(np,parBEMCRatio[t][centbin][etabin][parnum]->GetErrorX(np),parBEMCRatio[t][centbin][etabin][parnum]->GetErrorY(np)/fitTotal[1][centbin][etabin][parnum]->Eval(x));
+          }
+          parBEMCRatio[t][centbin][etabin][parnum]->GetXaxis()->SetRangeUser(anaConst::lowPt,anaConst::highPt);
+          parBEMCRatio[t][centbin][etabin][parnum]->GetYaxis()->SetRangeUser(0.8,1.2);
+          lineLow->Draw("same");
+          lineHigh->Draw("same");
+          cout<<"xxx"<<endl;
+          if(DEBUG) cout << "SMDL Par Num: " << parnum << endl;
+          parSMDL[t][centbin][etabin][parnum]->SetTitle("SMD "+title);
+          parSMDL[t][centbin][etabin][parnum]->SetMarkerStyle(20+t);
+          parSMDL[t][centbin][etabin][parnum]->SetMarkerColor(3);
+          parSMDL[t][centbin][etabin][parnum]->SetLineColor(3);
+          cout<<"xxx"<<endl;
+          setRangeAndDraw(parSMDL[t][centbin][etabin][parnum],parnum,paramCanv[1][t][centbin][etabin]);
+          cout<<"xxx"<<endl;
+          //findRejectPoints(t,2,parnum);
+          fitSMDL[t][centbin][etabin][parnum]->SetLineColor(3);
+          cout << "Fit: SMDL, Trig: " << t << ", Par: " << parnum << endl; 
+          if(!((parnum%3) == 0))
+            parSMDL[t][centbin][etabin][parnum]->Fit(fitSMDL[t][centbin][etabin][parnum],"R0");
+          parSMDLRatio[t][centbin][etabin][parnum]=(TGraphErrors*)parSMDL[t][centbin][etabin][parnum]->Clone();
+          for(int np=0;np<parBEMCRatio[t][centbin][etabin][parnum]->GetN();np++){
+            parSMDLRatio[t][centbin][etabin][parnum]->GetPoint(np,x,y);
+            parSMDLRatio[t][centbin][etabin][parnum]->SetPoint(np,x,y/fitTotal[1][centbin][etabin][parnum]->Eval(x));
+            parSMDLRatio[t][centbin][etabin][parnum]->SetPointError(np,parSMDLRatio[t][centbin][etabin][parnum]->GetErrorX(np),parSMDLRatio[t][centbin][etabin][parnum]->GetErrorY(np)/fitTotal[1][centbin][etabin][parnum]->Eval(x));
+          }
+          lineLow->Draw("same");
+          lineHigh->Draw("same");
+          cout<<"xxx"<<endl;
+          if(DEBUG) cout << "SMDT Par Num: " << parnum << endl;
+          parSMDT[t][centbin][etabin][parnum]->SetTitle("SMD2 "+title);
+          parSMDT[t][centbin][etabin][parnum]->SetMarkerStyle(20+t);
+          parSMDT[t][centbin][etabin][parnum]->SetMarkerColor(4);
+          parSMDT[t][centbin][etabin][parnum]->SetLineColor(4);
+          setRangeAndDraw(parSMDT[t][centbin][etabin][parnum],parnum,paramCanv[2][t][centbin][etabin]);
+          //findRejectPoints(t,3,parnum);
+          fitSMDT[t][centbin][etabin][parnum]->SetLineColor(4);
+          cout << "Fit: SMDT, Trig: " << t << ", Par: " << parnum << endl; 
+          if(!((parnum%3) == 0))
+            parSMDT[t][centbin][etabin][parnum]->Fit(fitSMDT[t][centbin][etabin][parnum],"R0");
+          parSMDTRatio[t][centbin][etabin][parnum]=(TGraphErrors*)parSMDT[t][centbin][etabin][parnum]->Clone();
+          for(int np=0;np<parBEMCRatio[t][centbin][etabin][parnum]->GetN();np++){
+            parSMDTRatio[t][centbin][etabin][parnum]->GetPoint(np,x,y);
+            parSMDTRatio[t][centbin][etabin][parnum]->SetPoint(np,x,y/fitTotal[1][centbin][etabin][parnum]->Eval(x));
+            parSMDTRatio[t][centbin][etabin][parnum]->SetPointError(np,parSMDTRatio[t][centbin][etabin][parnum]->GetErrorX(np),parSMDTRatio[t][centbin][etabin][parnum]->GetErrorY(np)/fitTotal[1][centbin][etabin][parnum]->Eval(x));
+          }
+          lineLow->Draw("same");
+          lineHigh->Draw("same");
+
           if(t==0) {
-            parBEMCRatio[t][etabin][parnum]->Draw("pae");
-            if(parnum%3!=0) {
-              for(int ier=0;ier<3;ier++) fitTotalRatio[ier][etabin][parnum]->Draw("same");
-            }
+            //parBEMC[t][centbin][etabin][parnum]->Draw("pae");
+            setRangeAndDraw(parTotal[1][centbin][etabin][parnum],parnum,paramCanvTotal[centbin][etabin]);
           }
           if(t<3) {
-            parBEMCRatio[t][etabin][parnum]->Draw("pesame");
-            parSMDLRatio[t][etabin][parnum]->Draw("pesame");
-            parSMDTRatio[t][etabin][parnum]->Draw("pesame");
+            paramCanvTotal[centbin][etabin]->cd(parnum+1);
+            parBEMC[t][centbin][etabin][parnum]->Draw("pesame");
+            parSMDL[t][centbin][etabin][parnum]->Draw("pesame");
+            parSMDT[t][centbin][etabin][parnum]->Draw("pesame");
+          }
+          if(t==2&&parnum%3!=0) {
+            paramCanvTotal[centbin][etabin]->cd(parnum+1);
+            for(int ier=0;ier<3;ier++) fitTotal[ier][centbin][etabin][parnum]->Draw("same");
+          }
+          lineLow->Draw("same");
+          lineHigh->Draw("same");
+
+          /*else parBEMC[t][centbin][etabin][parnum]->Draw("pesame");
+            parSMDL[t][centbin][etabin][parnum]->Draw("pesame");
+            parSMDT[t][centbin][etabin][parnum]->Draw("pesame");*/
+
+          paramCanvRatio[centbin][etabin]->cd(parnum+1);
+          if(parnum%3!=0) {
+            if(t==0) {
+              parBEMCRatio[t][centbin][etabin][parnum]->Draw("pae");
+              if(parnum%3!=0) {
+                for(int ier=0;ier<3;ier++) fitTotalRatio[ier][centbin][etabin][parnum]->Draw("same");
+              }
+            }
+            if(t<3) {
+              parBEMCRatio[t][centbin][etabin][parnum]->Draw("pesame");
+              parSMDLRatio[t][centbin][etabin][parnum]->Draw("pesame");
+              parSMDTRatio[t][centbin][etabin][parnum]->Draw("pesame");
+            }
           }
         }
       }
@@ -433,31 +460,37 @@ cout<<"xxx"<<endl;
   sprintf(name, "%s_paramFits_EtaBins.pdf", baseName);
   temp = fp; // print front page
   temp->Print(name);
-    
+
   for(int j=0; j<3; j++)
   {
     for(int q=0; q<4; q++)
     {
       if(DEBUG) cout << "Place Canvas in PDF trig: " << q << endl;
-      for(int e=0; e<numEtaBins; e++)
+      for(int c=0; c<numCentBins; c++)
       {  
-        if(DEBUG) cout << "Place Canvas in PDF eta: " << e << endl;
-        temp = paramCanv[j][q][e]; // print data canvases
-        temp->Print(name);
+        for(int e=0; e<numEtaBins; e++)
+        {  
+          if(DEBUG) cout << "Place Canvas in PDF eta: " << e << endl;
+          temp = paramCanv[j][q][c][e]; // print data canvases
+          temp->Print(name);
+        }
       }
     }
   }
-  for(int e=0; e<numEtaBins; e++)
-  {
-    if(DEBUG) cout << "Place Canvas in PDF eta: " << e << endl;
-    temp = paramCanvTotal[e]; // print data canvases
-    temp->Print(name);
-  }
-  for(int e=0; e<numEtaBins; e++)
-  {
-    if(DEBUG) cout << "Place Canvas in PDF eta: " << e << endl;
-    temp = paramCanvRatio[e]; // print data canvases
-    temp->Print(name);
+  for(int c=0; c<numCentBins; c++)
+  {  
+    for(int e=0; e<numEtaBins; e++)
+    {
+      if(DEBUG) cout << "Place Canvas in PDF eta: " << e << endl;
+      temp = paramCanvTotal[c][e]; // print data canvases
+      temp->Print(name);
+    }
+    for(int e=0; e<numEtaBins; e++)
+    {
+      if(DEBUG) cout << "Place Canvas in PDF eta: " << e << endl;
+      temp = paramCanvRatio[c][e]; // print data canvases
+      temp->Print(name);
+    }
   }
 
   sprintf(name, "%s_paramFits_EtaBins.pdf]", baseName);
@@ -466,15 +499,18 @@ cout<<"xxx"<<endl;
   TFile *outputfile=new TFile("fitpar_output.root","recreate");
   outputfile->cd();
   for(int ier=0; ier<3; ier++) {
+    for(int centbin=0;centbin<numCentBins;centbin++) {
       for(int etabin=0;etabin<numEtaBins;etabin++) {
-          for(int parnum=0; parnum<numparams; parnum++) {
-              if(parnum%3!=0) fitTotal[ier][etabin][parnum]->Write();
-          }
+        for(int parnum=0; parnum<numparams; parnum++) {
+          if(parnum%3!=0) fitTotal[ier][centbin][etabin][parnum]->Write();
+        }
       }
+    }
   }
   outputfile->Close();
   return 1;
 }
+
 
 void setRangeAndDraw(TGraphErrors* gr, int parnum,TCanvas* can)
 {
@@ -509,7 +545,7 @@ void setRangeAndDraw(TGraphErrors* gr, int parnum,TCanvas* can)
       break;
   }
   gr->Draw("ape");
-    if(parnum%3==0) gPad->SetLogy();
+  if(parnum%3==0) gPad->SetLogy();
 }
 
 double myFunc(double* x, double* par)
@@ -523,7 +559,7 @@ double myFunc(double* x, double* par)
     }
   }
   double ff = par[0]*TMath::Erf((x[0]-par[1])/par[2])-par[3];
-  
+
   //  double ff = par[0]*x[0]*x[0]+par[1]*x[0]+par[2];//TMath::Erf((x[0]-par[1])/par[2])-par[3];
 
   return ff;
@@ -533,16 +569,16 @@ double myFuncRatio(double* x, double* par)
 {
   double ff1 = par[0]*TMath::Erf((x[0]-par[1])/par[2])-par[3];
   double ff2 = par[4]*TMath::Erf((x[0]-par[5])/par[6])-par[7];
-    
+
   return ff1/ff2;
 }
 
 double myFuncScaled(double* x, double* par)
 {
-    //double ff1 = par[0]*TMath::Erf((x[0]-par[1])/par[2])-par[3];
-    double ff2 = par[4];
-    
-    return ff2;
+  //double ff1 = par[0]*TMath::Erf((x[0]-par[1])/par[2])-par[3];
+  double ff2 = par[4];
+
+  return ff2;
 }
 
 
